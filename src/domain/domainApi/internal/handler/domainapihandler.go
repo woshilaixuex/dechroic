@@ -3,13 +3,13 @@ package handler
 import (
 	"net/http"
 
-	"github.com/delyr1c/dechoric/src/domain/internal/logic"
-	"github.com/delyr1c/dechoric/src/domain/internal/svc"
-	"github.com/delyr1c/dechoric/src/domain/internal/types"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/logic"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/svc"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/types"
 	"github.com/zeromicro/go-zero/rest/httpx"
 )
 
-func DomainHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
+func DomainApiHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req types.Request
 		if err := httpx.Parse(r, &req); err != nil {
@@ -17,8 +17,8 @@ func DomainHandler(svcCtx *svc.ServiceContext) http.HandlerFunc {
 			return
 		}
 
-		l := logic.NewDomainLogic(r.Context(), svcCtx)
-		resp, err := l.Domain(&req)
+		l := logic.NewDomainApiLogic(r.Context(), svcCtx)
+		resp, err := l.DomainApi(&req)
 		if err != nil {
 			httpx.ErrorCtx(r.Context(), w, err)
 		} else {

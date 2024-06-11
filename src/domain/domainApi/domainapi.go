@@ -4,15 +4,15 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/delyr1c/dechoric/src/domain/internal/config"
-	"github.com/delyr1c/dechoric/src/domain/internal/handler"
-	"github.com/delyr1c/dechoric/src/domain/internal/svc"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/config"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/handler"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/svc"
 
 	"github.com/zeromicro/go-zero/core/conf"
 	"github.com/zeromicro/go-zero/rest"
 )
 
-var configFile = flag.String("f", "etc/domain-api.yaml", "the config file")
+var configFile = flag.String("f", "etc/domainapi-api.yaml", "the config file")
 
 func main() {
 	flag.Parse()

@@ -4,7 +4,7 @@ package handler
 import (
 	"net/http"
 
-	"github.com/delyr1c/dechoric/src/domain/internal/svc"
+	"github.com/delyr1c/dechoric/src/domain/domainApi/internal/svc"
 
 	"github.com/zeromicro/go-zero/rest"
 )
@@ -15,7 +15,7 @@ func RegisterHandlers(server *rest.Server, serverCtx *svc.ServiceContext) {
 			{
 				Method:  http.MethodGet,
 				Path:    "/from/:name",
-				Handler: DomainHandler(serverCtx),
+				Handler: DomainApiHandler(serverCtx),
 			},
 		},
 	)

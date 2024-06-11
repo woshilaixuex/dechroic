@@ -1,8 +1,6 @@
 package svc
 
-import (
-	"github.com/delyr1c/dechoric/src/domain/internal/config"
-)
+import "github.com/delyr1c/dechoric/src/domain/domainRpc/internal/config"
 
 type ServiceContext struct {
 	Config config.Config

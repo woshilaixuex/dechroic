@@ -6,7 +6,7 @@ type Response {
 	Message string `json:"message"`
 }
 
-service domain-api {
-	@handler DomainHandler
+service domainApi-api {
+	@handler DomainApiHandler
 	get /from/:name(Request) returns (Response)
 }

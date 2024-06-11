@@ -1,0 +1,6 @@
+*.yaml
+*.yml
+*.sql
+*.config
+*.log
+*.env

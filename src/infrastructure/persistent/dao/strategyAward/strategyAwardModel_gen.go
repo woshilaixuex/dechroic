@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlc"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -26,6 +27,7 @@ type (
 	strategyAwardModel interface {
 		Insert(ctx context.Context, data *StrategyAward) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*StrategyAward, error)
+		FindListByStrategyId(ctx context.Context, strategyId int64) (*[]StrategyAward, error)
 		Update(ctx context.Context, data *StrategyAward) error
 		Delete(ctx context.Context, id int64) error
 	}
@@ -43,7 +45,7 @@ type (
 		AwardSubtitle     sql.NullString `db:"award_subtitle"`      // 抽奖奖品副标题
 		AwardCount        int64          `db:"award_count"`         // 奖品库存总量
 		AwardCountSurplus int64          `db:"award_count_surplus"` // 奖品库存剩余
-		AwardRate         float64        `db:"award_rate"`          // 奖品中奖概率
+		AwardRate         common.BigFloat        `db:"award_rate"`          // 奖品中奖概率
 		RuleModels        sql.NullString `db:"rule_models"`         // 规则模型，rule配置的模型同步到此表，便于使用
 		Sort              int64          `db:"sort"`                // 排序
 		CreateTime        time.Time      `db:"create_time"`         // 创建时间
@@ -77,7 +79,19 @@ func (m *defaultStrategyAwardModel) FindOne(ctx context.Context, id int64) (*Str
 		return nil, err
 	}
 }
-
+func (m *defaultStrategyAwardModel) FindListByStrategyId(ctx context.Context, strategyId int64) (*[]StrategyAward, error){
+	query := fmt.Sprintf("select %s from %s where `strategy_id` = ? ORDER BY `sort` DESC", strategyAwardRows, m.table)
+	var resp []StrategyAward
+	err := m.conn.QueryRowsCtx(ctx, &resp, query, strategyId)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlc.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
 func (m *defaultStrategyAwardModel) Insert(ctx context.Context, data *StrategyAward) (sql.Result, error) {
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?, ?, ?, ?, ?, ?, ?, ?)", m.table, strategyAwardRowsExpectAutoSet)
 	ret, err := m.conn.ExecCtx(ctx, query, data.StrategyId, data.AwardId, data.AwardTitle, data.AwardSubtitle, data.AwardCount, data.AwardCountSurplus, data.AwardRate, data.RuleModels, data.Sort)

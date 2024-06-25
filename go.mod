@@ -3,6 +3,7 @@ module github.com/delyr1c/dechoric
 go 1.20
 
 require (
+	github.com/jinzhu/copier v0.4.0
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/zeromicro/go-zero v1.6.5
 )

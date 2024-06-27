@@ -10,14 +10,20 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"math/big"
+	"sort"
 	"testing"
 
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
+	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	infra_award "github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/award"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	infra_repository "github.com/delyr1c/dechoric/src/infrastructure/persistent/repository"
+	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/conf"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -61,15 +67,27 @@ func TestInfrastructureRedisMap(t *testing.T) {
 	var c Config
 	conf.MustLoad(*configFile, &c)
 	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
-	var strategyMap = map[string]any{
+
+	var strategyMap = map[interface{}]any{
 		"1": "1",
 		"2": "2",
 		"3": "3",
 	}
-	rdb.SetToMap(context.Background(), "testmap", strategyMap)
+	t.Logf("Key: %v", strategyMap)
+
+	// 尝试存储数据到 Redis
+	err := rdb.SetToMap(context.Background(), "testmap", strategyMap)
+	if err != nil {
+		t.Errorf("Failed to set data to Redis: %v", err)
+	}
+	// 获取 Redis 中的数据
 	getstrategyMap := rdb.GetMap(context.Background(), "testmap")
-	for k, v := range getstrategyMap.Val() {
-		t.Logf("Key: %s, Value: %s", k, v)
+	if err := getstrategyMap.Err(); err != nil {
+		t.Errorf("Failed to get data from Redis: %v", err)
+	} else {
+		for k, v := range getstrategyMap.Val() {
+			t.Logf("Key: %s, Value: %s", k, v)
+		}
 	}
 }
 
@@ -108,7 +126,13 @@ func TestInfrastructureRedisArray(t *testing.T) {
 }
 
 // strategy业务测试
-
+func TestGetFromMap(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+	logx.Info(rdb.GetFromMap(context.Background(), "dechoric_strategy_rate_table_key_100002", "1").Int64())
+}
 func TestGetStrategy(t *testing.T) {
 	flag.Parse()
 	var c Config
@@ -126,7 +150,71 @@ func TestGetStrategy(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to find all awards: %v", err)
 	}
+	sum := common.NewBigFloat()
+	sort.Slice(entitis, func(i, j int) bool {
+		return entitis[i].AwardRate.Cmp(&entitis[j].AwardRate) < 0
+	})
+	min := entitis[0].AwardRate
 	for _, entity := range entitis {
-		t.Logf("Value: %+v %v", entity, entity.AwardRate.String())
+		t.Log(sum.Float.String())
+		sum.Float.Add(sum.Float, entity.AwardRate.Float)
 	}
+	t.Log(sum.Float.String())
+	t.Log(sum.Float.Quo(sum.Float, min.Float).String())
+}
+func TestAssembleLotteryStrategy(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	strategyArmory.AssembleLotteryStrategy(context.Background(), 100002)
+	// RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100001)
+	// if err != nil {
+	// 	t.Fatalf("failed to find all awards: %v", err)
+	// }
+	// fmt.Print("奖品ID:")
+	// fmt.Println(RandomAwardId)
+}
+func TestGetRandomAwardId(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100002)
+	if err != nil {
+		t.Fatalf("failed to find all awards: %v", err)
+	}
+	fmt.Print("奖品ID:")
+	fmt.Println(RandomAwardId)
+}
+func TestBigFloat(t *testing.T) {
+	prec := uint(200)
+	rateSum := new(big.Float).SetPrec(prec).SetFloat64(100.2)
+	rateMin := new(big.Float).SetPrec(prec).SetFloat64(0.001)
+
+	// 求取范围
+	fRateRange := new(big.Float).Quo(rateSum, rateMin)
+	iRateRange := new(big.Int)
+
+	// 获取整数部分和舍入情况
+	fRateRange.Int(iRateRange)
+
+	fmt.Printf("Rate range: %s\n", fRateRange.String())
+	fmt.Printf("Integer Rate range: %s\n", iRateRange.String())
 }

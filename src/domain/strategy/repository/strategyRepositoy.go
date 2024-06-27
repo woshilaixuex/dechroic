@@ -15,6 +15,9 @@ import (
 
 type StrategyRepository1 interface {
 	QueryStrategyAwardList(ctx context.Context, strategyId int64) ([]entity.StrategyAwardEntity, error)
+	StoreStrategyAwardSearchRateTable(ctx context.Context, strategyId, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error
+	GetRateRange(ctx context.Context, strategyId int64) (int64, error)
+	GetAssembleRandomVal(ctx context.Context, strategyId, redisKey int64) (int64, error)
 }
 
 type StrategyService struct {
@@ -29,4 +32,13 @@ func NewStrategyService(repo StrategyRepository1) *StrategyService {
 
 func (s *StrategyService) QueryStrategyAwardList(ctx context.Context, strategyId int64) ([]entity.StrategyAwardEntity, error) {
 	return s.repo.QueryStrategyAwardList(ctx, strategyId)
+}
+func (s *StrategyService) StoreStrategyAwardSearchRateTable(ctx context.Context, strategyId, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error {
+	return s.repo.StoreStrategyAwardSearchRateTable(ctx, strategyId, rang, shuffleStrategyAwardSearchRateTable)
+}
+func (s *StrategyService) GetRateRange(ctx context.Context, strategyId int64) (int64, error) {
+	return s.repo.GetRateRange(ctx, strategyId)
+}
+func (s *StrategyService) GetAssembleRandomVal(ctx context.Context, strategyId, redisKey int64) (int64, error) {
+	return s.repo.GetAssembleRandomVal(ctx, strategyId, redisKey)
 }

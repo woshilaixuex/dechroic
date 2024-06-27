@@ -11,6 +11,7 @@ import (
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/jinzhu/copier"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 /*
@@ -52,4 +53,35 @@ func (s *StrategyRepository) QueryStrategyAwardList(ctx context.Context, strateg
 	}
 
 	return strategyAwardEntityList, nil
+}
+func (s *StrategyRepository) StoreStrategyAwardSearchRateTable(ctx context.Context, strategyId, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error {
+	err := s.RedisService.SetValue(ctx, common.RedisKeys.StrategyRateRangeKey+strconv.FormatInt(strategyId, 10), rang)
+	if err != nil {
+		logx.Info(err.Error())
+		return err
+	}
+	err = s.RedisService.SetToMap(ctx, common.RedisKeys.StrategyRateTableKey+strconv.FormatInt(strategyId, 10), shuffleStrategyAwardSearchRateTable)
+	if err != nil {
+		logx.Info(err.Error())
+		return err
+	}
+	return nil
+}
+func (s *StrategyRepository) GetRateRange(ctx context.Context, strategyId int64) (int64, error) {
+	rateRang, err := s.RedisService.GetValue(ctx, common.RedisKeys.StrategyRateRangeKey+strconv.FormatInt(strategyId, 10))
+	if err != nil {
+		return 0, err
+	}
+	return rateRang.(int64), nil
+}
+
+func (s *StrategyRepository) GetAssembleRandomVal(ctx context.Context, strategyId, redisKey int64) (int64, error) {
+	randomVal := s.RedisService.GetFromMap(ctx, common.RedisKeys.StrategyRateTableKey+strconv.FormatInt(strategyId, 10), strconv.FormatInt(redisKey, 10))
+
+	val, err := strconv.ParseInt(randomVal.Val(), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return val, nil
 }

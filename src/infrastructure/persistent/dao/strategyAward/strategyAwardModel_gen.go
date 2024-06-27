@@ -45,7 +45,7 @@ type (
 		AwardSubtitle     sql.NullString `db:"award_subtitle"`      // 抽奖奖品副标题
 		AwardCount        int64          `db:"award_count"`         // 奖品库存总量
 		AwardCountSurplus int64          `db:"award_count_surplus"` // 奖品库存剩余
-		AwardRate         common.BigFloat        `db:"award_rate"`          // 奖品中奖概率
+		AwardRate         common.BigFloat`db:"award_rate"`          // 奖品中奖概率
 		RuleModels        sql.NullString `db:"rule_models"`         // 规则模型，rule配置的模型同步到此表，便于使用
 		Sort              int64          `db:"sort"`                // 排序
 		CreateTime        time.Time      `db:"create_time"`         // 创建时间

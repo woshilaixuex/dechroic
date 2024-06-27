@@ -6,6 +6,7 @@ package common
  * @Description: 常用常量
  * @Date: 2024-06-25 20:49
  */
+
 const (
 	SPLIT     = ","
 	COLON     = ":"

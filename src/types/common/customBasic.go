@@ -16,13 +16,15 @@ import (
  */
 
 // 高精度浮点
-type BigFloat big.Float
-
-func (f *BigFloat) String() string {
-	return (*big.Float)(f).String()
+type BigFloat struct {
+	*big.Float
 }
-func (f *BigFloat) Set(value *big.Float) {
-	(*big.Float)(f).Set(value)
+
+func NewBigFloat() *BigFloat {
+	return &BigFloat{new(big.Float)}
+}
+func (f *BigFloat) Cmp(y *BigFloat) int {
+	return f.Float.Cmp(y.Float)
 }
 
 // sql/database基本类型接口实现
@@ -30,7 +32,9 @@ func (f *BigFloat) Scan(value interface{}) error {
 	if value == nil {
 		return nil
 	}
-
+	if f.Float == nil {
+		f.Float = new(big.Float)
+	}
 	switch v := value.(type) {
 	case []byte:
 		fVal, _, err := big.ParseFloat(string(v), 10, 512, big.ToNearestEven)
@@ -56,7 +60,7 @@ func (f *BigFloat) Value() (driver.Value, error) {
 
 // 序列化接口实现
 func (f *BigFloat) MarshalJSON() ([]byte, error) {
-	if f == nil {
+	if f.Float == nil {
 		return json.Marshal(nil)
 	}
 	return json.Marshal(f.String())
@@ -66,17 +70,26 @@ func (f *BigFloat) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &value); err != nil {
 		return err
 	}
+	if f.Float == nil {
+		f.Float = new(big.Float)
+	}
 	switch v := value.(type) {
 	case nil:
-		f = nil
+		*f = BigFloat{}
+	case []byte:
+		floatVal, _, err := big.ParseFloat(string(v), 10, 256, big.ToNearestEven)
+		if err != nil {
+			return err
+		}
+		f.Float.Set(floatVal)
 	case string:
 		floatVal, _, err := big.ParseFloat(v, 10, 256, big.ToNearestEven)
 		if err != nil {
 			return err
 		}
-		f.Set(floatVal)
+		f.Float.Set(floatVal)
 	case float64:
-		(*big.Float)(f).SetFloat64(v)
+		f.Float.SetFloat64(v)
 	default:
 		return errors.New("invalid type for BigFloat")
 	}

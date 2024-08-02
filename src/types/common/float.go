@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+
+	"github.com/delyr1c/dechoric/src/types/cerr"
 )
 
 /*
  * @Author: deylr1c
  * @Email: linyugang7295@gmail.com
- * @Description: 自定义基础类型封装
+ * @Description: 自定义高精度浮点
  * @Date: 2024-06-25 20:48
  */
 
@@ -23,8 +25,40 @@ type BigFloat struct {
 func NewBigFloat() *BigFloat {
 	return &BigFloat{new(big.Float)}
 }
+
 func (f *BigFloat) Cmp(y *BigFloat) int {
 	return f.Float.Cmp(y.Float)
+}
+
+// 获取最小浮点单位增量
+func GetSmallestUnitIncrementByStr(f *big.Float) (*big.Float, error) {
+	increment := new(big.Float).SetPrec(f.Prec())
+	nums, err := f.MarshalText()
+	if err != nil {
+		return nil, cerr.LogError(errors.New("the big.Float`s formatis err"))
+	}
+	newnums := make([]byte, 0)
+	isFound := false
+	index := 0
+	for _, num := range nums {
+		switch num {
+		case '.':
+			index += 1
+			newnums = append(newnums, '0', '.')
+			isFound = true
+		default:
+			if isFound {
+				index += 1
+				newnums = append(newnums, '0')
+			}
+		}
+	}
+	if index < 2 {
+		return new(big.Float).SetFloat64(0), cerr.LogError(errors.New("the big.Float`s index less than 2"))
+	}
+	newnums[index] = '1'
+	increment.SetString(string(newnums))
+	return increment, nil
 }
 
 // sql/database基本类型接口实现

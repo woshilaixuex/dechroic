@@ -3,7 +3,7 @@ package common
 /*
  * @Author: deylr1c
  * @Email: linyugang7295@gmail.com
- * @Description: 常用常量
+ * @Description: 常量定义
  * @Date: 2024-06-25 20:49
  */
 

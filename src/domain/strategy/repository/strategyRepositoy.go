@@ -13,18 +13,21 @@ import (
  * @Date: 2024-06-16 11:29
  */
 
-type StrategyRepository1 interface {
+type StrategyRepositoryI interface {
 	QueryStrategyAwardList(ctx context.Context, strategyId int64) ([]entity.StrategyAwardEntity, error)
-	StoreStrategyAwardSearchRateTable(ctx context.Context, strategyId, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error
-	GetRateRange(ctx context.Context, strategyId int64) (int64, error)
-	GetAssembleRandomVal(ctx context.Context, strategyId, redisKey int64) (int64, error)
+	StoreStrategyAwardSearchRateTable(ctx context.Context, key string, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error
+	GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error)
+	GetRateRange(ctx context.Context, key string) (int64, error)
+	GetAssembleRandomVal(ctx context.Context, key string, redisKey int64) (int64, error)
+	QueryStrategyEntityByStrategyId(ctx context.Context, strategyId int64) (*entity.StrategyEntity, error)
+	QueryStrategyRule(ctx context.Context, strategyId int64, roleModel string) (*entity.StrategyRuleEntity, error)
 }
 
 type StrategyService struct {
-	repo StrategyRepository1
+	repo StrategyRepositoryI
 }
 
-func NewStrategyService(repo StrategyRepository1) *StrategyService {
+func NewStrategyService(repo StrategyRepositoryI) *StrategyService {
 	return &StrategyService{
 		repo: repo,
 	}
@@ -33,12 +36,21 @@ func NewStrategyService(repo StrategyRepository1) *StrategyService {
 func (s *StrategyService) QueryStrategyAwardList(ctx context.Context, strategyId int64) ([]entity.StrategyAwardEntity, error) {
 	return s.repo.QueryStrategyAwardList(ctx, strategyId)
 }
-func (s *StrategyService) StoreStrategyAwardSearchRateTable(ctx context.Context, strategyId, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error {
-	return s.repo.StoreStrategyAwardSearchRateTable(ctx, strategyId, rang, shuffleStrategyAwardSearchRateTable)
+func (s *StrategyService) StoreStrategyAwardSearchRateTable(ctx context.Context, key string, rang int64, shuffleStrategyAwardSearchRateTable map[interface{}]interface{}) error {
+	return s.repo.StoreStrategyAwardSearchRateTable(ctx, key, rang, shuffleStrategyAwardSearchRateTable)
 }
-func (s *StrategyService) GetRateRange(ctx context.Context, strategyId int64) (int64, error) {
-	return s.repo.GetRateRange(ctx, strategyId)
+func (s *StrategyService) GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error) {
+	return s.repo.GetRateRangeBeta(ctx, strategyId)
 }
-func (s *StrategyService) GetAssembleRandomVal(ctx context.Context, strategyId, redisKey int64) (int64, error) {
-	return s.repo.GetAssembleRandomVal(ctx, strategyId, redisKey)
+func (s *StrategyService) GetRateRange(ctx context.Context, key string) (int64, error) {
+	return s.repo.GetRateRange(ctx, key)
+}
+func (s *StrategyService) GetAssembleRandomVal(ctx context.Context, key string, redisKey int64) (int64, error) {
+	return s.repo.GetAssembleRandomVal(ctx, key, redisKey)
+}
+func (s *StrategyService) QueryStrategyEntityByStrategyId(ctx context.Context, strategyId int64) (*entity.StrategyEntity, error) {
+	return s.repo.QueryStrategyEntityByStrategyId(ctx, strategyId)
+}
+func (s *StrategyService) QueryStrategyRule(ctx context.Context, strategyId int64, roleModel string) (*entity.StrategyRuleEntity, error) {
+	return s.repo.QueryStrategyRule(ctx, strategyId, roleModel)
 }

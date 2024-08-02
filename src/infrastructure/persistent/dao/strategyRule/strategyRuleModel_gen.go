@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlc"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
@@ -28,6 +29,7 @@ type (
 		FindOne(ctx context.Context, id int64) (*StrategyRule, error)
 		Update(ctx context.Context, data *StrategyRule) error
 		Delete(ctx context.Context, id int64) error
+		FindByReq(ctx context.Context, req *FindStrategyRuleReq) ([]*StrategyRule, error)
 	}
 
 	defaultStrategyRuleModel struct {
@@ -45,6 +47,11 @@ type (
 		RuleDesc   string        `db:"rule_desc"`   // 抽奖规则描述
 		CreateTime time.Time     `db:"create_time"` // 创建时间
 		UpdateTime time.Time     `db:"update_time"` // 更新时间
+	}
+	FindStrategyRuleReq struct {
+		StrategyId *int64
+		RuleType   *int64
+		RuleModel  *string
 	}
 )
 
@@ -89,4 +96,32 @@ func (m *defaultStrategyRuleModel) Update(ctx context.Context, data *StrategyRul
 
 func (m *defaultStrategyRuleModel) tableName() string {
 	return m.table
+}
+// Req查询
+func (m *defaultStrategyRuleModel) FindByReq(ctx context.Context, req *FindStrategyRuleReq) ([]*StrategyRule, error) {
+	query := fmt.Sprintf("select %s from %s where 1=1", strategyRuleRows, m.table)
+	args := []interface{}{}
+
+	if req.StrategyId != nil {
+		query += " AND strategy_id = ?"
+		args = append(args, *req.StrategyId)
+	}
+
+	if req.RuleType != nil {
+		query += " AND rule_type = ?"
+		args = append(args, *req.RuleType)
+	}
+
+	if req.RuleModel != nil {
+		query += " AND rule_model = ?"
+		args = append(args, *req.RuleModel)
+	}
+
+	var rules []*StrategyRule
+	err := m.conn.QueryRowsCtx(ctx, &rules, query, args...)
+	if err != nil {
+		return nil,cerr.LogError(err)
+	}
+
+	return rules, nil
 }

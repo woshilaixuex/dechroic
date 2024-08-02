@@ -40,11 +40,6 @@ func NewRedisService(addr, password string, db int) *RedisService {
 	}
 }
 
-// SetValue 设置指定 key 的值
-func (rs *RedisService) SetValue(ctx context.Context, key string, value interface{}) error {
-	return rs.client.Set(ctx, key, value, 0).Err()
-}
-
 // SetValueWithExpiration 设置指定 key 的值，并设置过期时间
 func (rs *RedisService) SetValueWithExpiration(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
 	return rs.client.Set(ctx, key, value, expiration).Err()
@@ -73,7 +68,50 @@ func (rs *RedisService) GetArray(ctx context.Context, key string, result interfa
 	return nil
 }
 
-// AddToMap 将指定的键值对添加到哈希表中
+// SetToMapString 将指定的键值对序列化存储
+func (rs *RedisService) SetToMapString(ctx context.Context, key string, hashmap map[interface{}]interface{}) error {
+	setMap := make(map[string]interface{}, len(hashmap))
+
+	for k, v := range hashmap {
+		switch k := k.(type) {
+		case string:
+			setMap[k] = v
+		case int:
+			setMap[strconv.Itoa(k)] = v
+		case int64:
+			setMap[strconv.FormatInt(k, 10)] = v
+		default:
+			return fmt.Errorf("unsupported key type: %T", k)
+		}
+	}
+	jsonString, err := json.Marshal(setMap)
+	if err != nil {
+		return err
+	}
+	err = rs.client.Set(ctx, key, jsonString, 0).Err()
+	return err
+}
+
+// GetMapString 获取反序列化map
+func (rs *RedisService) GetMapString(ctx context.Context, key string) *redis.StringCmd {
+	return rs.client.Get(ctx, key)
+}
+
+// GetFromMapString 获取反序列化map fieId对应的值
+func (rs *RedisService) GetFromMapString(ctx context.Context, key, field string) (interface{}, error) {
+	jsonString, err := rs.client.Get(ctx, key).Result()
+	if err != nil {
+		return "", err
+	}
+
+	var hashmap map[string]interface{}
+	if err := json.Unmarshal([]byte(jsonString), &hashmap); err != nil {
+		return "", err
+	}
+	return hashmap[field], nil
+}
+
+// SetToMap 将指定的键值对添加到哈希表中
 func (rs *RedisService) SetToMap(ctx context.Context, key string, hashmap map[interface{}]interface{}) error {
 	setMap := make(map[string]interface{}, len(hashmap))
 
@@ -117,6 +155,8 @@ func (rs *RedisService) SetToMap(ctx context.Context, key string, hashmap map[in
 func (rs *RedisService) GetMap(ctx context.Context, key string) *redis.MapStringStringCmd {
 	return rs.client.HGetAll(ctx, key)
 }
+
+// GetFromMap 获取指定 key fueId 对应的 Map
 func (rs *RedisService) GetFromMap(ctx context.Context, key, field string) *redis.StringCmd {
 	return rs.client.HGet(ctx, key, field)
 }
@@ -135,23 +175,34 @@ func (rs *RedisService) SetList(ctx context.Context, key string, values []interf
 	return err
 }
 
-// GetValue 从 Redis 中获取指定 key 的值，并反序列化为目标类型
+// SetValue 储存键值对，如果是其他类型会进行序列化
+func (rs *RedisService) SetValue(ctx context.Context, key string, value interface{}) error {
+	// 检查值的类型
+	var data string
+	switch v := value.(type) {
+	case string:
+		data = v
+	default:
+		// 将复杂类型序列化为 JSON
+		jsonData, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		data = string(jsonData)
+	}
+
+	// 将值存储到 Redis
+	return rs.client.Set(ctx, key, data, 0).Err()
+}
+
+// // GetValue 从 Redis 中获取指定 key 的值
 func (rs *RedisService) GetValue(ctx context.Context, key string) (interface{}, error) {
 	val, err := rs.client.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return nil, nil // key 不存在，返回 nil
+		return "", nil // key 不存在，返回 nil
 	} else if err != nil {
-		return nil, err // 其他错误
+		return "", err // 其他错误
 	}
-
-	// 尝试将返回值转换为 int64 或 int
-	if int64Val, err := strconv.ParseInt(val, 10, 64); err == nil {
-		return int64Val, nil
-	}
-	if intVal, err := strconv.Atoi(val); err == nil {
-		return intVal, nil
-	}
-
 	// 默认返回 string 类型
 	return val, nil
 }

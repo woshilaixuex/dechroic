@@ -26,6 +26,7 @@ type (
 	strategyModel interface {
 		Insert(ctx context.Context, data *Strategy) (sql.Result, error)
 		FindOne(ctx context.Context, id int64) (*Strategy, error)
+		FindByStrategyId(ctx context.Context, strategyId int64) (*Strategy, error)
 		Update(ctx context.Context, data *Strategy) error
 		Delete(ctx context.Context, id int64) error
 	}
@@ -39,6 +40,7 @@ type (
 		Id           int64     `db:"id"`            // 自增ID
 		StrategyId   int64     `db:"strategy_id"`   // 抽奖策略ID
 		StrategyDesc string    `db:"strategy_desc"` // 抽奖策略描述
+		RuleModels 	string 		`db:"rule_model"`// 抽奖规则的模型
 		CreateTime   time.Time `db:"create_time"`   // 创建时间
 		UpdateTime   time.Time `db:"update_time"`   // 更新时间
 	}
@@ -70,7 +72,19 @@ func (m *defaultStrategyModel) FindOne(ctx context.Context, id int64) (*Strategy
 		return nil, err
 	}
 }
-
+func (m *defaultStrategyModel)FindByStrategyId(ctx context.Context, strategyId int64) (*Strategy, error){
+	query := fmt.Sprintf("select %s from %s where `strategy_id` = ? limit 1", strategyRows, m.table)
+	var resp Strategy
+	err := m.conn.QueryRowCtx(ctx, &resp, query, strategyId)
+	switch err {
+	case nil:
+		return &resp, nil
+	case sqlc.ErrNotFound:
+		return nil, ErrNotFound
+	default:
+		return nil, err
+	}
+}
 func (m *defaultStrategyModel) Insert(ctx context.Context, data *Strategy) (sql.Result, error) {
 	query := fmt.Sprintf("insert into %s (%s) values (?, ?)", m.table, strategyRowsExpectAutoSet)
 	ret, err := m.conn.ExecCtx(ctx, query, data.StrategyId, data.StrategyDesc)

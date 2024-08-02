@@ -2,10 +2,11 @@ package armory
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"math/rand"
 	"sort"
-	"time"
+	"strconv"
 
 	"github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
@@ -13,18 +14,33 @@ import (
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
-// 200 位精度，确保足够高的精度
+/*
+ * @Author: deylr1c
+ * @Email: linyugang7295@gmail.com
+ * @Description: 策略装配工厂的实现
+ * @Date: 2024-07-24 12:40
+ */
+
+// 40 位精度，确保足够高的精度
 var (
-	prec = uint(200)
+	prec = uint(40)
 )
 
+// ------------------------------------------------------------
 // 策略工厂接口
-type Armory interface {
-	AssembleLotteryStrategy(strategyId int64) bool
-	GetRandomAwardId(ctx context.Context, strategyId int64) (int64, error)
+type StrategyAssemble interface {
+	AssembleLotteryStrategy(ctx context.Context, strategyId int64) bool
 }
 
-// 策略工厂实现
+type Armory interface {
+	StrategyAssemble
+	StrategyDispath
+}
+
+var _ Armory = (*StrategyArmory)(nil)
+
+// ------------------------------------------------------------
+// 策略工厂实体
 type StrategyArmory struct {
 	strategyService repository.StrategyService
 }
@@ -42,16 +58,56 @@ func (armory *StrategyArmory) AssembleLotteryStrategy(ctx context.Context, strat
 	// 获取策略列表
 	entities, err := armory.strategyService.QueryStrategyAwardList(ctx, strategyId)
 	if err != nil {
-		logx.Error(err.Error())
 		return false
 	}
 	logx.Infof("Fetched %d strategy awards", len(entities))
+	armory.assembleLotteryStrategy(ctx, strconv.FormatInt(strategyId, 10), entities)
+	// 权重规则配置
+	strategyEntity, err := armory.strategyService.QueryStrategyEntityByStrategyId(ctx, strategyId)
+	if err != nil {
+		return false
+	}
+	ruleWeight, err := strategyEntity.GetRuleWeight()
+	if err != nil {
+		return false
+	}
+	if ruleWeight == "" {
+		return true
+	}
+	// 查询规则
+	strategyRule, err := armory.strategyService.QueryStrategyRule(ctx, strategyId, ruleWeight)
+	if err != nil {
+		return false
+	}
+	ruleMap, err := strategyRule.GetRule()
+	if err != nil {
+		return false
+	}
+	logx.Debug(ruleMap)
+	for key, set := range ruleMap {
+		var entitiesClone []entity.StrategyAwardEntity
+		for _, etty := range entities {
+			if set[etty.AwardId] {
+				entitiesClone = append(entitiesClone, etty)
+			}
+		}
+		strategyKey := fmt.Sprintf("%d_%d", strategyId, key)
+		armory.assembleLotteryStrategy(ctx, strategyKey, entitiesClone)
+	}
+	return true
+}
 
+// 装配工厂核心实现
+func (armory *StrategyArmory) assembleLotteryStrategy(ctx context.Context, key string, entities []entity.StrategyAwardEntity) {
 	// 获取最小概率
 	sort.Slice(entities, func(i, j int) bool {
 		return entities[i].AwardRate.Cmp(&entities[j].AwardRate) < 0
 	})
 	rateMin := new(big.Float).SetPrec(prec).Set(entities[0].AwardRate.Float)
+	rateMin, err := common.GetSmallestUnitIncrementByStr(rateMin)
+	if err != nil {
+		return
+	}
 	rateSum := common.NewBigFloat().SetPrec(prec)
 	for _, entity := range entities {
 		rateSum.Add(rateSum, entity.AwardRate.Float)
@@ -75,13 +131,12 @@ func (armory *StrategyArmory) AssembleLotteryStrategy(ctx context.Context, strat
 	}
 	logx.Infof("Rate map: %v", len(shuffleStrategyAwardSearchRateTable))
 	// 存放到 Redis
-	if err := armory.strategyService.StoreStrategyAwardSearchRateTable(ctx, strategyId, iRateRange.Int64(),
+	if err := armory.strategyService.StoreStrategyAwardSearchRateTable(ctx, key, iRateRange.Int64(),
 		shuffleStrategyAwardSearchRateTable); err != nil {
 		logx.Error(err.Error())
-		return false
+		return
 	}
 	logx.Info("Stored rate table in Redis")
-	return true
 }
 
 // 生成概率表
@@ -102,19 +157,7 @@ func generateRateTable(entities []entity.StrategyAwardEntity, rateMin *big.Float
 
 // 乱序搜索表
 func shuffleStrategyAwardSearchRateTable(strategyAwardSearchRateTables []int64) {
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(strategyAwardSearchRateTables), func(i, j int) {
 		strategyAwardSearchRateTables[i], strategyAwardSearchRateTables[j] = strategyAwardSearchRateTables[j], strategyAwardSearchRateTables[i]
 	})
-}
-
-// 获取随机奖品 ID
-func (armory *StrategyArmory) GetRandomAwardId(ctx context.Context, strategyId int64) (int64, error) {
-	rateRange, err := armory.strategyService.GetRateRange(ctx, strategyId)
-	if err != nil {
-		logx.Error(err.Error())
-		return 0, err
-	}
-	randomVal := rand.Int63n(rateRange)
-	return armory.strategyService.GetAssembleRandomVal(ctx, strategyId, randomVal)
 }

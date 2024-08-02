@@ -18,7 +18,9 @@ import (
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	infra_award "github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/award"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyRule"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	infra_repository "github.com/delyr1c/dechoric/src/infrastructure/persistent/repository"
 	"github.com/delyr1c/dechoric/src/types/common"
@@ -175,7 +177,7 @@ func TestAssembleLotteryStrategy(t *testing.T) {
 		StrategyAwardModel: AwardModel,
 	}
 	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
-	strategyArmory.AssembleLotteryStrategy(context.Background(), 100002)
+	strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
 	// RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100001)
 	// if err != nil {
 	// 	t.Fatalf("failed to find all awards: %v", err)
@@ -196,12 +198,14 @@ func TestGetRandomAwardId(t *testing.T) {
 		StrategyAwardModel: AwardModel,
 	}
 	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
-	RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100002)
-	if err != nil {
-		t.Fatalf("failed to find all awards: %v", err)
+	for i := 0; i < 10; i++ {
+		RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100001, 0)
+		if err != nil {
+			t.Fatalf("failed to find all awards: %v", err)
+		}
+		fmt.Print("奖品ID:")
+		fmt.Println(RandomAwardId)
 	}
-	fmt.Print("奖品ID:")
-	fmt.Println(RandomAwardId)
 }
 func TestBigFloat(t *testing.T) {
 	prec := uint(200)
@@ -217,4 +221,47 @@ func TestBigFloat(t *testing.T) {
 
 	fmt.Printf("Rate range: %s\n", fRateRange.String())
 	fmt.Printf("Integer Rate range: %s\n", iRateRange.String())
+}
+
+// 7.29策略更新增加按量更新功能
+func TestAssembleLotteryStrategy729(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+		StrategyModel:      Model,
+		StrategyRuleModel:  RuleMode,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
+}
+func TestGetRandomAwardId729(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	for i := 0; i < 10; i++ {
+		RandomAwardId, err := strategyArmory.GetRandomAwardId(context.Background(), 100001, 6000)
+		if err != nil {
+			t.Fatalf("failed to find all awards: %v", err)
+		}
+		fmt.Print("奖品ID:")
+		fmt.Println(RandomAwardId)
+	}
 }

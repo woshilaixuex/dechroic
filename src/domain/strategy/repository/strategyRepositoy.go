@@ -21,6 +21,7 @@ type StrategyRepositoryI interface {
 	GetAssembleRandomVal(ctx context.Context, key string, redisKey int64) (int64, error)
 	QueryStrategyEntityByStrategyId(ctx context.Context, strategyId int64) (*entity.StrategyEntity, error)
 	QueryStrategyRule(ctx context.Context, strategyId int64, roleModel string) (*entity.StrategyRuleEntity, error)
+	QueryStrategyRuleValue(ctx context.Context, strategyId int64, awardId int32, roleModel string) (string, error)
 }
 
 type StrategyService struct {
@@ -53,4 +54,7 @@ func (s *StrategyService) QueryStrategyEntityByStrategyId(ctx context.Context, s
 }
 func (s *StrategyService) QueryStrategyRule(ctx context.Context, strategyId int64, roleModel string) (*entity.StrategyRuleEntity, error) {
 	return s.repo.QueryStrategyRule(ctx, strategyId, roleModel)
+}
+func (s *StrategyService) QueryStrategyRuleValue(ctx context.Context, strategyId int64, awardId int32, roleModel string) (string, error) {
+	return s.repo.QueryStrategyRuleValue(ctx, strategyId, awardId, roleModel)
 }

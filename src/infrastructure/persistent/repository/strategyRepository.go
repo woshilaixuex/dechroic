@@ -160,9 +160,6 @@ func (s *StrategyRepository) QueryStrategyRule(ctx context.Context, strategyId i
 	if err != nil {
 		return nil, err
 	}
-	if strategyRules == nil {
-		return nil, nil
-	}
 	strategyRule := new(strategyEntity.StrategyRuleEntity)
 	copier.Copy(strategyRule, strategyRules[0])
 	return strategyRule, nil

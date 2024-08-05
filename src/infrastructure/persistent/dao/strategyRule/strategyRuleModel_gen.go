@@ -5,7 +5,9 @@ package strategyRule
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -30,6 +32,7 @@ type (
 		Update(ctx context.Context, data *StrategyRule) error
 		Delete(ctx context.Context, id int64) error
 		FindByReq(ctx context.Context, req *FindStrategyRuleReq) ([]*StrategyRule, error)
+		FindRuleValueByReq(ctx context.Context, req *FindStrategyRuleReq) (string, error) 
 	}
 
 	defaultStrategyRuleModel struct {
@@ -49,9 +52,9 @@ type (
 		UpdateTime time.Time     `db:"update_time"` // 更新时间
 	}
 	FindStrategyRuleReq struct {
-		StrategyId *int64
-		RuleType   *int64
-		RuleModel  *string
+		StrategyId 	*int64			`db:"strategy_id"` // 抽奖策略ID
+		AwardId 	*int32			`db:"award_id"`    // 抽奖奖品ID【规则类型为策略，则不需要奖品ID
+		RuleModel  	*string			`db:"rule_model"`  // 抽奖规则类型【rule_random - 随机值计算、rule_lock - 抽奖几次后解锁、rule_luck_award - 幸运奖(兜底奖品)】
 	}
 )
 
@@ -99,22 +102,24 @@ func (m *defaultStrategyRuleModel) tableName() string {
 }
 // Req查询
 func (m *defaultStrategyRuleModel) FindByReq(ctx context.Context, req *FindStrategyRuleReq) ([]*StrategyRule, error) {
+
+
 	query := fmt.Sprintf("select %s from %s where 1=1", strategyRuleRows, m.table)
 	args := []interface{}{}
-
-	if req.StrategyId != nil {
-		query += " AND strategy_id = ?"
-		args = append(args, *req.StrategyId)
-	}
-
-	if req.RuleType != nil {
-		query += " AND rule_type = ?"
-		args = append(args, *req.RuleType)
-	}
-
-	if req.RuleModel != nil {
-		query += " AND rule_model = ?"
-		args = append(args, *req.RuleModel)
+	v := reflect.ValueOf(req).Elem()
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+		if field.Kind() == reflect.Ptr && !field.IsNil() {
+			tag := fieldType.Tag.Get("db")
+			if tag == "" {
+				cerr.LogError(errors.New("tag db`s value is null"))
+				continue
+			}
+			query += fmt.Sprintf(" AND %s = ?", tag)
+			args = append(args, field.Interface())
+		}
 	}
 
 	var rules []*StrategyRule
@@ -124,4 +129,33 @@ func (m *defaultStrategyRuleModel) FindByReq(ctx context.Context, req *FindStrat
 	}
 
 	return rules, nil
+}
+
+func (m *defaultStrategyRuleModel) FindRuleValueByReq(ctx context.Context, req *FindStrategyRuleReq) (string, error) {
+	query := fmt.Sprintf("select %s from %s where 1=1", strategyRuleRows, m.table)
+	args := []interface{}{}
+	v := reflect.ValueOf(req).Elem()
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+		if field.Kind() == reflect.Ptr && !field.IsNil() {
+			tag := fieldType.Tag.Get("db")
+			if tag == "" {
+				cerr.LogError(errors.New("tag db`s value is null"))
+				continue
+			}
+			query += fmt.Sprintf(" AND %s = ?", tag)
+			args = append(args, field.Interface())
+		}
+	}
+
+	var rule *StrategyRule
+	err := m.conn.QueryRowCtx(ctx, &rule, query, args...)
+	if err != nil {
+		return "",cerr.LogError(err)
+	}
+
+	return rule.RuleValue, nil
 }

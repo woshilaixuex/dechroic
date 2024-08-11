@@ -151,8 +151,8 @@ func (m *defaultStrategyRuleModel) FindRuleValueByReq(ctx context.Context, req *
 		}
 	}
 
-	var rule *StrategyRule
-	err := m.conn.QueryRowCtx(ctx, &rule, query, args...)
+	rule := new(StrategyRule)
+	err := m.conn.QueryRowCtx(ctx, rule, query, args...)
 	if err != nil {
 		return "",cerr.LogError(err)
 	}

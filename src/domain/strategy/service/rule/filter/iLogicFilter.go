@@ -9,6 +9,7 @@ import (
 	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/factory/model"
+	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter/interface"
 
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -17,26 +18,29 @@ import (
 /*
  * @Author: deylr1c
  * @Email: linyugang7295@gmail.com
- * @Description: 黑名单过滤引擎
+ * @Description: 黑名单过滤引擎(产品)
  * @Date: 2024-08-04 21:42
  */
 
-type ILogicFilter[T StrategyEntity.RaffleActionEntityInterface] interface {
-	Filter(ctx context.Context, ruleMatter StrategyEntity.RuleMatterEntity) (T, error)
-}
-
-var _ ILogicFilter[StrategyEntity.RaffleActionEntityInterface] = (*RuleBackListLogicFilter)(nil)
+var _ filter_interface.ILogicFilter[StrategyEntity.RaffleActionEntityInterface] = (*RuleBackListLogicFilter)(nil)
 
 type RuleBackListLogicFilter struct {
-	ILogicFilter[StrategyEntity.RaffleActionEntityInterface]
-	strategyService repository.StrategyService
+	StrategyService repository.StrategyService
+	LogicModel      LogicModel.LogicModel
+}
+
+func NewRuleBackListLogicFilter(StrategyService repository.StrategyService) *RuleBackListLogicFilter {
+	return &RuleBackListLogicFilter{
+		StrategyService: StrategyService,
+		LogicModel:      LogicModel.RULE_BLACKLIST,
+	}
 }
 
 // 黑名单过滤
 func (filter *RuleBackListLogicFilter) Filter(ctx context.Context, ruleMatter StrategyEntity.RuleMatterEntity) (StrategyEntity.RaffleActionEntityInterface, error) {
 	logx.Infof("规则过滤-黑名单 userId:%s strategyId:%d ruleModel:%s", ruleMatter.UserId, ruleMatter.StrategyId, ruleMatter.RuleModel)
 	userId := ruleMatter.UserId
-	ruleValue, err := filter.strategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
+	ruleValue, err := filter.StrategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
 	if err != nil {
 		return nil, err
 	}
@@ -63,4 +67,8 @@ func (filter *RuleBackListLogicFilter) Filter(ctx context.Context, ruleMatter St
 		Code: vo.ALLOW.Code,
 		Info: vo.ALLOW.Info,
 	}, nil
+}
+
+func (filter *RuleBackListLogicFilter) GetLogicModel() LogicModel.LogicModel {
+	return filter.LogicModel
 }

@@ -15,8 +15,10 @@ import (
 func (s *StrategyRepository) QueryStrategyRuleValue(ctx context.Context, strategyId int64, awardId int32, roleModel string) (string, error) {
 	strategyRuleReq := &strategyRule.FindStrategyRuleReq{
 		StrategyId: &strategyId,
-		AwardId:    &awardId,
 		RuleModel:  &roleModel,
+	}
+	if awardId == 0 {
+		strategyRuleReq.AwardId = nil
 	}
 	return s.StrategyRuleModel.FindRuleValueByReq(ctx, strategyRuleReq)
 }

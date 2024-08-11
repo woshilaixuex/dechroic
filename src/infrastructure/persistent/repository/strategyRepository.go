@@ -78,27 +78,6 @@ func (s *StrategyRepository) StoreStrategyAwardSearchRateTable(ctx context.Conte
 	}
 	return nil
 }
-func (s *StrategyRepository) GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error) {
-	key := strconv.FormatInt(strategyId, 10)
-	return s.GetRateRange(ctx, key)
-}
-func (s *StrategyRepository) GetRateRange(ctx context.Context, key string) (int64, error) {
-	val, err := s.RedisService.GetValue(ctx, common.RedisKeys.StrategyRateRangeKey+key)
-	if err != nil {
-		return 0, cerr.LogError(err)
-	}
-	rateRangStr, ok := val.(string)
-	if !ok {
-		err := errors.New("failed to convert rateRangStr to string")
-		return 0, cerr.LogError(err)
-	}
-	rateRang, err := strconv.ParseInt(rateRangStr, 10, 64)
-	if err != nil {
-		err := errors.New("failed to convert rateRangStr to int64")
-		return 0, cerr.LogError(err)
-	}
-	return rateRang, nil
-}
 func (s *StrategyRepository) GetAssembleRandomVal(ctx context.Context, key string, redisKey int64) (int64, error) {
 	// 这是序列化方法
 	// string
@@ -163,4 +142,25 @@ func (s *StrategyRepository) QueryStrategyRule(ctx context.Context, strategyId i
 	strategyRule := new(strategyEntity.StrategyRuleEntity)
 	copier.Copy(strategyRule, strategyRules[0])
 	return strategyRule, nil
+}
+func (s *StrategyRepository) GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error) {
+	key := strconv.FormatInt(strategyId, 10)
+	return s.GetRateRange(ctx, key)
+}
+func (s *StrategyRepository) GetRateRange(ctx context.Context, key string) (int64, error) {
+	val, err := s.RedisService.GetValue(ctx, common.RedisKeys.StrategyRateRangeKey+key)
+	if err != nil {
+		return 0, cerr.LogError(err)
+	}
+	rateRangStr, ok := val.(string)
+	if !ok {
+		err := errors.New("failed to convert rateRangStr to string")
+		return 0, cerr.LogError(err)
+	}
+	rateRang, err := strconv.ParseInt(rateRangStr, 10, 64)
+	if err != nil {
+		err := errors.New("failed to convert rateRangStr to int64")
+		return 0, cerr.LogError(err)
+	}
+	return rateRang, nil
 }

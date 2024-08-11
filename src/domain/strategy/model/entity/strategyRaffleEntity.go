@@ -21,13 +21,23 @@ type RaffleCenterEntity struct {
 type RaffleAfterEntity struct {
 	RaffleEntityinterface
 }
-type RaffleActionEntityInterface interface{}
+type RaffleActionEntityInterface interface {
+	GetCode() string
+	GetInfo() string
+}
 type RaffleActionEntity[T RaffleEntityinterface] struct {
 	RaffleActionEntityInterface
 	Code      string
 	Info      string
 	RuleModel string `db:"rule_model"` // 抽奖规则类型【rule_random - 随机值计算、rule_lock - 抽奖几次后解锁、rule_luck_award - 幸运奖(兜底奖品)】
 	Data      T
+}
+
+func (entity *RaffleActionEntity[RaffleEntityinterface]) GetCode() string {
+	return entity.Code
+}
+func (entity *RaffleActionEntity[RaffleEntityinterface]) GetInfo() string {
+	return entity.Info
 }
 
 type RaffleAwardEntity struct {

@@ -15,8 +15,10 @@ import (
 	"sort"
 	"testing"
 
+	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
+	"github.com/delyr1c/dechoric/src/domain/strategy/service/raffle"
 	infra_award "github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/award"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
@@ -127,7 +129,7 @@ func TestInfrastructureRedisArray(t *testing.T) {
 	}
 }
 
-// strategy业务测试
+// strategy armory业务测试
 func TestGetFromMap(t *testing.T) {
 	flag.Parse()
 	var c Config
@@ -251,9 +253,13 @@ func TestGetRandomAwardId729(t *testing.T) {
 
 	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
 	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
 	strategyRepo := &infra_repository.StrategyRepository{
 		RedisService:       *rdb,
 		StrategyAwardModel: AwardModel,
+		StrategyModel:      Model,
+		StrategyRuleModel:  RuleMode,
 	}
 	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
 	for i := 0; i < 10; i++ {
@@ -264,4 +270,33 @@ func TestGetRandomAwardId729(t *testing.T) {
 		fmt.Print("奖品ID:")
 		fmt.Println(RandomAwardId)
 	}
+}
+
+// strategy 过滤器测试
+func TestPerformRaffleBlacklist(t *testing.T) { // 黑名单测试
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+		StrategyModel:      Model,
+		StrategyRuleModel:  RuleMode,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
+	entity := new(StrategyEntity.RaffleFactorEntity)
+	entity.StrategyId = 100001
+	entity.UserId = "user005"
+	awradEntity, err := defaultRaffleStrategy.PerformRaffle(context.Background(), entity)
+	if err != nil {
+		t.Fatalf("PerformRaffle get err: %v", err)
+	}
+	t.Logf("奖品策略Id:%d", awradEntity.AwardId)
 }

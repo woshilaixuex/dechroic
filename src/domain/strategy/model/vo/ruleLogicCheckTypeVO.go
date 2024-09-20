@@ -1,5 +1,11 @@
 package vo
 
+/*
+ * @Author: deylr1c
+ * @Email: linyugang7295@gmail.com
+ * @Description:
+ * @Date: 2024-08-12 18:32
+ */
 type RuleLogicCheckTypeVO struct {
 	Code string
 	Info string

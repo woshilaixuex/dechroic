@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
+	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 )
 
 /*
@@ -22,6 +23,7 @@ type StrategyRepositoryI interface {
 	QueryStrategyRuleValue(ctx context.Context, strategyId int64, awardId int32, roleModel string) (string, error)
 	GetRateRange(ctx context.Context, key string) (int64, error)
 	GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error)
+	QueryStrategyAwardRuleModelVO(ctx context.Context, strategyId int64, awardId int32) (*vo.StrategyAwardRuleModelVO, error)
 }
 
 type StrategyService struct {
@@ -58,4 +60,7 @@ func (s *StrategyService) GetRateRangeBeta(ctx context.Context, strategyId int64
 }
 func (s *StrategyService) GetRateRange(ctx context.Context, key string) (int64, error) {
 	return s.repo.GetRateRange(ctx, key)
+}
+func (s *StrategyService) QueryStrategyAwardRuleModelVO(ctx context.Context, strategyId int64, awardId int32) (*vo.StrategyAwardRuleModelVO, error) {
+	return s.repo.QueryStrategyAwardRuleModelVO(ctx, strategyId, awardId)
 }

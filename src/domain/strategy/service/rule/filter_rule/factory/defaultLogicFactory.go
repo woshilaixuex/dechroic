@@ -5,9 +5,9 @@ import (
 
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
-	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/factory/model"
-	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter"
-	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter/interface"
+	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/factory/model"
+	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/filter"
+	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/filter/interface"
 )
 
 /*
@@ -44,6 +44,8 @@ func (f *DefaultLogicFactory) InitFilters(filters []filter_interface.ILogicFilte
 		f.models = append(f.models, model)
 	}
 }
+
+// 返回对应的过滤器群
 func (f *DefaultLogicFactory) OpenLogicFilter() map[string]filter_interface.ILogicFilter[StrategyEntity.RaffleActionEntityInterface] {
 	f.mu.RLock()
 	defer f.mu.RUnlock()

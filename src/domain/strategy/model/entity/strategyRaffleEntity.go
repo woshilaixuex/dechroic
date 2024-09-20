@@ -50,6 +50,7 @@ type RaffleAwardEntity struct {
 type RaffleFactorEntity struct {
 	UserId     string
 	StrategyId int64
+	AwardId    int32
 }
 
 // 过滤判断需要的参数实体

@@ -300,3 +300,70 @@ func TestPerformRaffleBlacklist(t *testing.T) { // 黑名单测试
 	}
 	t.Logf("奖品策略Id:%d", awradEntity.AwardId)
 }
+
+// 8.19策略更新增加按量更新功能
+func TestPerformRaffleBlacklist819(t *testing.T) { // 黑名单测试
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	// 初始化依赖
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+		StrategyModel:      Model,
+		StrategyRuleModel:  RuleMode,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
+	// defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
+	// entity := new(StrategyEntity.RaffleFactorEntity)
+	// 黑名单100:user001,user002,user003
+	// 4000:102,103,104,105 5000:102,103,104,105,106,107 6000:102,103,104,105,106,107,108,109
+	// entity.StrategyId = 100001
+	// entity.UserId = "user001"
+	// // 查询流程
+	// awradEntity, err := defaultRaffleStrategy.PerformRaffle(context.Background(), entity)
+	// if err != nil {
+	// 	t.Fatalf("PerformRaffle get err: %v", err)
+	// }
+	// t.Logf("奖品策略Id:%d", awradEntity.AwardId)
+}
+
+// 9.20过滤器责任链测试
+func TestPerformRaffleBlacklist920(t *testing.T) {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	// 初始化依赖
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
+	strategyRepo := &infra_repository.StrategyRepository{
+		RedisService:       *rdb,
+		StrategyAwardModel: AwardModel,
+		StrategyModel:      Model,
+		StrategyRuleModel:  RuleMode,
+	}
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	// strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
+	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
+	entity := new(StrategyEntity.RaffleFactorEntity)
+	// 黑名单100:user001,user002,user003
+
+	// 4000:102,103,104,105 5000:102,103,104,105,106,107 6000:102,103,104,105,106,107,108,109
+	entity.StrategyId = 100001
+	entity.UserId = "user001"
+	// 查询流程
+	awradEntity, err := defaultRaffleStrategy.PerformRaffle(context.Background(), entity)
+	if err != nil {
+		t.Fatalf("PerformRaffle get err: %v", err)
+	}
+	t.Logf("奖品策略Id:%d", awradEntity.AwardId)
+}

@@ -10,8 +10,8 @@ import (
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
-	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/factory/model"
-	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter/interface"
+	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/factory/model"
+	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/filter/interface"
 	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -26,24 +26,24 @@ import (
 var _ filter_interface.ILogicFilter[StrategyEntity.RaffleActionEntityInterface] = (*RuleWeightLogicFilter)(nil)
 
 type RuleWeightLogicFilter struct {
-	StrategyService repository.StrategyService
-	LogicModel      LogicModel.LogicModel
-	UserScore       int64
+	strategyService repository.StrategyService
+	logicModel      LogicModel.LogicModel
+	userScore       int64
 }
 
-func NewRuleWeightLogicFilter(StrategyService repository.StrategyService) *RuleWeightLogicFilter {
+func NewRuleWeightLogicFilter(strategyService repository.StrategyService) *RuleWeightLogicFilter {
 	return &RuleWeightLogicFilter{
-		StrategyService: StrategyService,
-		LogicModel:      LogicModel.RULE_WEIGHT,
-		UserScore:       -1, // 默认负一
+		strategyService: strategyService,
+		logicModel:      LogicModel.RULE_WEIGHT,
+		userScore:       -1, // 默认负一
 	}
 }
 func (filter *RuleWeightLogicFilter) Filter(ctx context.Context, ruleMatter StrategyEntity.RuleMatterEntity) (StrategyEntity.RaffleActionEntityInterface, error) {
-	filter.UserScore = 6000
+	filter.userScore = 6000
 	logx.Infof("规则过滤-权重范围 userId:%s strategyId:%d ruleModel:%s", ruleMatter.UserId, ruleMatter.StrategyId, ruleMatter.RuleModel)
 	// userId := ruleMatter.UserId
 	strategyId := ruleMatter.StrategyId
-	ruleValue, err := filter.StrategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
+	ruleValue, err := filter.strategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (filter *RuleWeightLogicFilter) Filter(ctx context.Context, ruleMatter Stra
 	})
 	var nextValue int64 = -1
 	for _, analyticalSortedKey := range analyticalSortedKeys {
-		if filter.UserScore < analyticalSortedKey {
+		if filter.userScore < analyticalSortedKey {
 			break
 		}
 		nextValue = analyticalSortedKey
@@ -104,5 +104,5 @@ func getAnalyticalValue(ruleValue string) (map[int64]string, []int64, error) {
 	return ruleValueMap, analyticalSortedKeys, nil
 }
 func (filter *RuleWeightLogicFilter) GetLogicModel() LogicModel.LogicModel {
-	return filter.LogicModel
+	return filter.logicModel
 }

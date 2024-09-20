@@ -4,7 +4,7 @@ import (
 	"context"
 
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
-	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/factory/model"
+	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/factory/model"
 )
 
 /*
@@ -13,6 +13,8 @@ import (
  * @Description: 工厂接口（用来约束和切断依赖环的）
  * @Date: 2024-08-08 15:22
  */
+
+// 内部除了规则模型一律都不暴露
 type ILogicFilter[T StrategyEntity.RaffleActionEntityInterface] interface {
 	Filter(ctx context.Context, ruleMatter StrategyEntity.RuleMatterEntity) (T, error)
 	GetLogicModel() LogicModel.LogicModel

@@ -5,10 +5,13 @@ package strategyAward
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
+	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/stores/builder"
 	"github.com/zeromicro/go-zero/core/stores/sqlc"
@@ -30,6 +33,7 @@ type (
 		FindListByStrategyId(ctx context.Context, strategyId int64) (*[]StrategyAward, error)
 		Update(ctx context.Context, data *StrategyAward) error
 		Delete(ctx context.Context, id int64) error
+		FindByReq(ctx context.Context,req *FindStrategyAwardReq) ([]*StrategyAward,error)
 	}
 
 	defaultStrategyAwardModel struct {
@@ -50,6 +54,10 @@ type (
 		Sort              int64          `db:"sort"`                // 排序
 		CreateTime        time.Time      `db:"create_time"`         // 创建时间
 		UpdateTime        time.Time      `db:"update_time"`         // 修改时间
+	}
+	FindStrategyAwardReq struct{
+		StrategyId 	*int64
+		AwardId 	*int64
 	}
 )
 
@@ -103,7 +111,31 @@ func (m *defaultStrategyAwardModel) Update(ctx context.Context, data *StrategyAw
 	_, err := m.conn.ExecCtx(ctx, query, data.StrategyId, data.AwardId, data.AwardTitle, data.AwardSubtitle, data.AwardCount, data.AwardCountSurplus, data.AwardRate, data.RuleModels, data.Sort, data.Id)
 	return err
 }
-
+func (m *defaultStrategyAwardModel)FindByReq(ctx context.Context,req *FindStrategyAwardReq) ([]*StrategyAward,error){
+	query := fmt.Sprintf("select %s from %s where 1=1", strategyAwardRows, m.table)
+	args := []interface{}{}
+	v := reflect.ValueOf(req).Elem()
+	t := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		fieldType := t.Field(i)
+		if field.Kind() == reflect.Ptr && !field.IsNil() {
+			tag := fieldType.Tag.Get("db")
+			if tag == "" {
+				cerr.LogError(errors.New("tag db`s value is null"))
+				continue
+			}
+			query += fmt.Sprintf(" AND %s = ?", tag)
+			args = append(args, field.Interface())
+		}
+	}
+	var strategyAwards []*StrategyAward
+	err := m.conn.QueryRowsCtx(ctx, &strategyAwards, query, args...)
+	if err != nil {
+		return nil,cerr.LogError(err)
+	}
+	return strategyAwards,nil
+}
 func (m *defaultStrategyAwardModel) tableName() string {
 	return m.table
 }

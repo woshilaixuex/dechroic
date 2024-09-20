@@ -24,7 +24,7 @@ type StrategyAwardEntity struct {
 	AwardRate         common.BigFloat `db:"award_rate" json:"award_rate"`                   // 奖品中奖概率
 }
 
-// 策略权重实体
+// 策略实体
 type StrategyEntity struct {
 	StrategyId   int64  `db:"strategy_id"`   // 抽奖策略ID
 	StrategyDesc string `db:"strategy_desc"` // 抽奖策略描述

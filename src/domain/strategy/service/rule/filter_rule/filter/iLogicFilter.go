@@ -8,8 +8,8 @@ import (
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
-	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/factory/model"
-	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter/interface"
+	LogicModel "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/factory/model"
+	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/filter/interface"
 
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/zeromicro/go-zero/core/logx"
@@ -25,14 +25,14 @@ import (
 var _ filter_interface.ILogicFilter[StrategyEntity.RaffleActionEntityInterface] = (*RuleBackListLogicFilter)(nil)
 
 type RuleBackListLogicFilter struct {
-	StrategyService repository.StrategyService
-	LogicModel      LogicModel.LogicModel
+	strategyService repository.StrategyService
+	logicModel      LogicModel.LogicModel
 }
 
-func NewRuleBackListLogicFilter(StrategyService repository.StrategyService) *RuleBackListLogicFilter {
+func NewRuleBackListLogicFilter(strategyService repository.StrategyService) *RuleBackListLogicFilter {
 	return &RuleBackListLogicFilter{
-		StrategyService: StrategyService,
-		LogicModel:      LogicModel.RULE_BLACKLIST,
+		strategyService: strategyService,
+		logicModel:      LogicModel.RULE_BLACKLIST,
 	}
 }
 
@@ -40,7 +40,7 @@ func NewRuleBackListLogicFilter(StrategyService repository.StrategyService) *Rul
 func (filter *RuleBackListLogicFilter) Filter(ctx context.Context, ruleMatter StrategyEntity.RuleMatterEntity) (StrategyEntity.RaffleActionEntityInterface, error) {
 	logx.Infof("规则过滤-黑名单 userId:%s strategyId:%d ruleModel:%s", ruleMatter.UserId, ruleMatter.StrategyId, ruleMatter.RuleModel)
 	userId := ruleMatter.UserId
-	ruleValue, err := filter.StrategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
+	ruleValue, err := filter.strategyService.QueryStrategyRuleValue(ctx, ruleMatter.StrategyId, ruleMatter.AwardId, ruleMatter.RuleModel)
 	if err != nil {
 		return nil, err
 	}
@@ -70,5 +70,5 @@ func (filter *RuleBackListLogicFilter) Filter(ctx context.Context, ruleMatter St
 }
 
 func (filter *RuleBackListLogicFilter) GetLogicModel() LogicModel.LogicModel {
-	return filter.LogicModel
+	return filter.logicModel
 }

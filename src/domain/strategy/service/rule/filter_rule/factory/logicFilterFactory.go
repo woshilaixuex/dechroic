@@ -3,7 +3,7 @@ package factory
 import (
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
-	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter/interface"
+	filter_interface "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/filter/interface"
 )
 
 /*

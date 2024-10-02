@@ -24,6 +24,7 @@ type StrategyRepositoryI interface {
 	GetRateRange(ctx context.Context, key string) (int64, error)
 	GetRateRangeBeta(ctx context.Context, strategyId int64) (int64, error)
 	QueryStrategyAwardRuleModelVO(ctx context.Context, strategyId int64, awardId int32) (*vo.StrategyAwardRuleModelVO, error)
+	QueryRuleTreeVOByTreeId(ctx context.Context, treeId string) (*vo.RuleTreeVO, error)
 }
 
 type StrategyService struct {
@@ -63,4 +64,9 @@ func (s *StrategyService) GetRateRange(ctx context.Context, key string) (int64, 
 }
 func (s *StrategyService) QueryStrategyAwardRuleModelVO(ctx context.Context, strategyId int64, awardId int32) (*vo.StrategyAwardRuleModelVO, error) {
 	return s.repo.QueryStrategyAwardRuleModelVO(ctx, strategyId, awardId)
+}
+
+// 查询规则树
+func (s *StrategyService) QueryRuleTreeVOByTreeId(ctx context.Context, treeId string) (*vo.RuleTreeVO, error) {
+	return s.repo.QueryRuleTreeVOByTreeId(ctx, treeId)
 }

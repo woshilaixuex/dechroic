@@ -16,13 +16,19 @@ import (
 	"testing"
 
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
+	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/raffle"
+	tree_factory "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/tree/factory"
+	tree_impl "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/tree/impl"
 	infra_award "github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/award"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyRule"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRule"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNode"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNodeLine"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	infra_repository "github.com/delyr1c/dechoric/src/infrastructure/persistent/repository"
 	"github.com/delyr1c/dechoric/src/types/common"
@@ -356,14 +362,113 @@ func TestPerformRaffleBlacklist920(t *testing.T) {
 	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
 	entity := new(StrategyEntity.RaffleFactorEntity)
 	// 黑名单100:user001,user002,user003
-
 	// 4000:102,103,104,105 5000:102,103,104,105,106,107 6000:102,103,104,105,106,107,108,109
 	entity.StrategyId = 100001
-	entity.UserId = "user001"
+	entity.UserId = "user005"
 	// 查询流程
 	awradEntity, err := defaultRaffleStrategy.PerformRaffle(context.Background(), entity)
 	if err != nil {
 		t.Fatalf("PerformRaffle get err: %v", err)
 	}
 	t.Logf("奖品策略Id:%d", awradEntity.AwardId)
+}
+
+// 初始化仓储
+func initStrategyRepo() *infra_repository.StrategyRepository {
+	flag.Parse()
+	var c Config
+	conf.MustLoad(*configFile, &c)
+	// 初始化依赖
+	rdb := redis.NewRedisService(c.Redis.Host, c.Redis.Password, c.Redis.DB)
+	sqlConn := sqlx.NewMysql(c.DB.MySqlDataSource)
+	AwardModel := strategyAward.NewStrategyAwardModel(sqlConn)
+	RuleMode := strategyRule.NewStrategyRuleModel(sqlConn)
+	Model := strategy.NewStrategyModel(sqlConn)
+	TreeModel := treeRule.NewRuleTreeModel(sqlConn)
+	TreeNodeModel := treeRuleNode.NewRuleTreeNodeModel(sqlConn)
+	TreeNodeLineModel := treeRuleNodeLine.NewRuleTreeNodeLineModel(sqlConn)
+	return &infra_repository.StrategyRepository{
+		RedisService:          *rdb,
+		StrategyAwardModel:    AwardModel,
+		StrategyModel:         Model,
+		StrategyRuleModel:     RuleMode,
+		TreeRuleModel:         TreeModel,
+		TreeRuleNodeModel:     TreeNodeModel,
+		TreeRuleNodeLineModel: TreeNodeLineModel,
+	}
+}
+
+// 9.23策略树测试
+func TestLogicTree(t *testing.T) {
+	// 带切片的VO
+	rule_lock := &vo.RuleTreeNodeVO{
+		TreeId:                  100000001,
+		RuleKey:                 "rule_lock",
+		RukeDesc:                "限定用户已完成N次抽奖后解锁",
+		RuleValue:               "1",
+		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
+	}
+	ruleTreeNodeLineVO1 := &vo.RuleTreeNodeLineVO{
+		TreeId:               100000001,
+		RuleNodeFrom:         "rule_lock",
+		RuleNodeTo:           "rule_luck_award",
+		RuleLimitTypeVO:      &vo.EQUAL,
+		RuleLogicCheckTypeVO: &vo.TAKE_OVER,
+	}
+	ruleTreeNodeLineVO2 := &vo.RuleTreeNodeLineVO{
+		TreeId:               100000001,
+		RuleNodeFrom:         "rule_lock",
+		RuleNodeTo:           "rule_stock",
+		RuleLimitTypeVO:      &vo.EQUAL,
+		RuleLogicCheckTypeVO: &vo.ALLOW,
+	}
+	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
+	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO2)
+	// 无值VO
+	rule_luck_award := &vo.RuleTreeNodeVO{
+		TreeId:                  100000001,
+		RuleKey:                 "rule_luck_award",
+		RukeDesc:                "限定用户已完成N次抽奖后解锁",
+		RuleValue:               "1",
+		RuleTreeNodeLineVOSlice: nil,
+	}
+	rule_stock := &vo.RuleTreeNodeVO{
+		TreeId:                  100000001,
+		RuleKey:                 "rule_stock",
+		RukeDesc:                "库存处理规则",
+		RuleValue:               "",
+		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
+	}
+	rule_stock.RuleTreeNodeLineVOSlice = append(rule_stock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
+	ruleTreeVO := vo.NewRuleTreeVO()
+	ruleTreeVO.TreeId = 100000001
+	ruleTreeVO.TreeName = "决策树规则；增加dall-e-3画图模型"
+	ruleTreeVO.TreeDesc = "决策树规则；增加dall-e-3画图模型"
+	ruleTreeVO.TreeRootRuleNode = "rule_lock"
+	ruleTreeVO.TreeNodeMap["rule_lock"] = rule_lock
+	ruleTreeVO.TreeNodeMap["rule_stock"] = rule_stock
+	ruleTreeVO.TreeNodeMap["rule_luck_award"] = rule_luck_award
+	treeFactory := tree_factory.NewDefultTreeFactory(tree_impl.NewRuleLockLogicTreeNode(),
+		tree_impl.NewRuleLuckAwardLogicTreeNode(),
+		tree_impl.NewRuleStockLogicTreeNode())
+	treeComposite := treeFactory.OpenLogicTree(ruleTreeVO)
+	data := treeComposite.Process("delyr1c", 100001, 100)
+	t.Log(data.AwardRuleValue)
+}
+
+// 10.3策略数链接
+func TestLogicTreeLink(t *testing.T) {
+	strategyRepo := initStrategyRepo()
+	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
+	raffleAwardEntity := &StrategyEntity.RaffleFactorEntity{
+		UserId:     "delyr1c",
+		StrategyId: 100006,
+	}
+	award, err := defaultRaffleStrategy.PerformRaffle(context.Background(), raffleAwardEntity)
+	if err != nil {
+		t.Fail()
+	}
+
+	t.Log(award)
 }

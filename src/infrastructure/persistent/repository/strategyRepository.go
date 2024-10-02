@@ -12,6 +12,9 @@ import (
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyRule"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRule"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNode"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNodeLine"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/common"
@@ -30,10 +33,13 @@ import (
 var _ strategyRepository.StrategyRepositoryI = (*StrategyRepository)(nil)
 
 type StrategyRepository struct {
-	RedisService       redis.RedisService
-	StrategyAwardModel strategyAward.StrategyAwardModel
-	StrategyModel      strategy.StrategyModel
-	StrategyRuleModel  strategyRule.StrategyRuleModel
+	RedisService          redis.RedisService
+	StrategyAwardModel    strategyAward.StrategyAwardModel
+	StrategyModel         strategy.StrategyModel
+	StrategyRuleModel     strategyRule.StrategyRuleModel
+	TreeRuleModel         treeRule.RuleTreeModel
+	TreeRuleNodeModel     treeRuleNode.RuleTreeNodeModel
+	TreeRuleNodeLineModel treeRuleNodeLine.RuleTreeNodeLineModel
 }
 
 // 返回strategyAwardEntityList（redis->db)

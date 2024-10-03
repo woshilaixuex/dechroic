@@ -26,8 +26,8 @@ var (
 
 // 创建映射表
 var ruleLogicCheckTypeMap = map[string]RuleLogicCheckTypeVO{
-	"0000": ALLOW,
-	"0001": TAKE_OVER,
+	"ALLOW":     ALLOW,
+	"TAKE_OVER": TAKE_OVER,
 }
 
 // 根据字符串查找匹配的 RuleLogicCheckTypeVO

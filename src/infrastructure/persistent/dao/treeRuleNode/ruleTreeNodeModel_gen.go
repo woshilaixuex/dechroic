@@ -25,7 +25,7 @@ type (
 	ruleTreeNodeModel interface {
 		Insert(ctx context.Context, data *RuleTreeNode) (sql.Result, error)
 		FindOne(ctx context.Context, id uint64) (*RuleTreeNode, error)
-		FindRuleTreeNodeListByTreeId(ctx context.Context,treeId string) ([]*RuleTreeNode, error)
+		FindRuleTreeNodeListByTreeId(ctx context.Context,treeId string) ([]RuleTreeNode, error)
 		Update(ctx context.Context, data *RuleTreeNode) error
 		Delete(ctx context.Context, id uint64) error
 	}
@@ -72,9 +72,9 @@ func (m *defaultRuleTreeNodeModel) FindOne(ctx context.Context, id uint64) (*Rul
 		return nil, err
 	}
 }
-func (m *defaultRuleTreeNodeModel) FindRuleTreeNodeListByTreeId(ctx context.Context,treeId string) ([]*RuleTreeNode, error){
+func (m *defaultRuleTreeNodeModel) FindRuleTreeNodeListByTreeId(ctx context.Context,treeId string) ([]RuleTreeNode, error){
 	query := fmt.Sprintf("select %s from %s where `tree_id` = ?", ruleTreeNodeRows, m.table)
-	var resp []*RuleTreeNode
+	var resp []RuleTreeNode
 	err := m.conn.QueryRowsCtx(ctx, &resp, query, treeId)
 	switch err {
 	case nil:

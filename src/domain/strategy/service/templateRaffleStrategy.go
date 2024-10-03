@@ -69,6 +69,7 @@ func (t *TemplateRaffleStrategy) PerformRaffle(ctx context.Context, entity *Stra
 	logx.Infof("抽奖策略计算-责任链 %s %d %d %s", userId, strategyId, chainStrategyAwardVO.AwardId, chainStrategyAwardVO.AwardRuleValue)
 	// 策略树
 	raffleStrategyAwardVO, err := t.raffleLogicTree(ctx, userId, strategyId, chainStrategyAwardVO.AwardId)
+	logx.Debug(raffleStrategyAwardVO)
 	if err != nil {
 		return nil, err
 	}

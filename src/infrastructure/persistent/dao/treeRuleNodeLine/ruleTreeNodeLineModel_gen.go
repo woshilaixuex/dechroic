@@ -25,7 +25,7 @@ type (
 	ruleTreeNodeLineModel interface {
 		Insert(ctx context.Context, data *RuleTreeNodeLine) (sql.Result, error)
 		FindOne(ctx context.Context, id uint64) (*RuleTreeNodeLine, error)
-		FindRuleTreeNodeLineListByTreeId(ctx context.Context, treeId string)([]*RuleTreeNodeLine, error)
+		FindRuleTreeNodeLineListByTreeId(ctx context.Context, treeId string)([]RuleTreeNodeLine, error)
 		Update(ctx context.Context, data *RuleTreeNodeLine) error
 		Delete(ctx context.Context, id uint64) error
 	}
@@ -73,10 +73,10 @@ func (m *defaultRuleTreeNodeLineModel) FindOne(ctx context.Context, id uint64) (
 		return nil, err
 	}
 }
-func (m *defaultRuleTreeNodeLineModel) FindRuleTreeNodeLineListByTreeId(ctx context.Context, treeId string)([]*RuleTreeNodeLine, error){
-	query := fmt.Sprintf("select %s from %s where `tree_id` = ? limit 1", ruleTreeNodeLineRows, m.table)
-	var resp []*RuleTreeNodeLine
-	err := m.conn.QueryRowCtx(ctx, &resp, query, treeId)
+func (m *defaultRuleTreeNodeLineModel) FindRuleTreeNodeLineListByTreeId(ctx context.Context, treeId string)([]RuleTreeNodeLine, error){
+	query := fmt.Sprintf("select %s from %s where `tree_id` = ?", ruleTreeNodeLineRows, m.table)
+	var resp []RuleTreeNodeLine
+	err := m.conn.QueryRowsCtx(ctx, &resp, query, treeId)
 	switch err {
 	case nil:
 		return resp, nil

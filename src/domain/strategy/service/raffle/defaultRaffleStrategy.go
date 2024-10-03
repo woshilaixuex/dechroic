@@ -8,6 +8,7 @@ import (
 	"github.com/delyr1c/dechoric/src/domain/strategy/service"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/filter_rule/factory"
+	"github.com/zeromicro/go-zero/core/logx"
 )
 
 /*
@@ -39,6 +40,7 @@ func (s *DefaultRaffleStrategy) raffleLogicChain(ctx context.Context, userId str
 }
 func (s *DefaultRaffleStrategy) raffleLogicTree(ctx context.Context, userId string, strategyId int64, awardId int32) (*data.StrategyAwardTreeVO, error) {
 	strategyAwardRuleModelVO, err := s.StrategyService.QueryStrategyAwardRuleModelVO(ctx, strategyId, awardId)
+	logx.Debug(strategyAwardRuleModelVO)
 	if err != nil || strategyAwardRuleModelVO == nil {
 		return &data.StrategyAwardTreeVO{
 			AwardId: awardId,

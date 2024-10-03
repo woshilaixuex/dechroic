@@ -7,7 +7,7 @@ package vo
  * @Date: 2024-09-21 19:22
  */
 type RuleTreeNodeLineVO struct {
-	TreeId       int32  // 规则数id
+	TreeId       string // 规则数id
 	RuleNodeFrom string // 来自节点
 	RuleNodeTo   string // 目标节点
 	// 限定类型

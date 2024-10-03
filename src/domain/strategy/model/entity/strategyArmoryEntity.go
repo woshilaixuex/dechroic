@@ -1,10 +1,8 @@
 package entity
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/common"
 )
 
@@ -33,7 +31,7 @@ type StrategyEntity struct {
 
 func (e *StrategyEntity) GetStrsRuleModels() ([]string, error) {
 	if strings.TrimSpace(e.RuleModels) == "" {
-		return nil, cerr.LogError(errors.New("rule models is blank"))
+		return nil, nil
 	}
 	ruleModels := strings.Split(e.RuleModels, common.SPLIT)
 	return ruleModels, nil

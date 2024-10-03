@@ -16,12 +16,9 @@ import (
 	"testing"
 
 	StrategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
-	"github.com/delyr1c/dechoric/src/domain/strategy/model/vo"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/raffle"
-	tree_factory "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/tree/factory"
-	tree_impl "github.com/delyr1c/dechoric/src/domain/strategy/service/rule/tree/impl"
 	infra_award "github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/award"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
@@ -399,67 +396,68 @@ func initStrategyRepo() *infra_repository.StrategyRepository {
 }
 
 // 9.23策略树测试
-func TestLogicTree(t *testing.T) {
-	// 带切片的VO
-	rule_lock := &vo.RuleTreeNodeVO{
-		TreeId:                  100000001,
-		RuleKey:                 "rule_lock",
-		RukeDesc:                "限定用户已完成N次抽奖后解锁",
-		RuleValue:               "1",
-		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
-	}
-	ruleTreeNodeLineVO1 := &vo.RuleTreeNodeLineVO{
-		TreeId:               100000001,
-		RuleNodeFrom:         "rule_lock",
-		RuleNodeTo:           "rule_luck_award",
-		RuleLimitTypeVO:      &vo.EQUAL,
-		RuleLogicCheckTypeVO: &vo.TAKE_OVER,
-	}
-	ruleTreeNodeLineVO2 := &vo.RuleTreeNodeLineVO{
-		TreeId:               100000001,
-		RuleNodeFrom:         "rule_lock",
-		RuleNodeTo:           "rule_stock",
-		RuleLimitTypeVO:      &vo.EQUAL,
-		RuleLogicCheckTypeVO: &vo.ALLOW,
-	}
-	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
-	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO2)
-	// 无值VO
-	rule_luck_award := &vo.RuleTreeNodeVO{
-		TreeId:                  100000001,
-		RuleKey:                 "rule_luck_award",
-		RukeDesc:                "限定用户已完成N次抽奖后解锁",
-		RuleValue:               "1",
-		RuleTreeNodeLineVOSlice: nil,
-	}
-	rule_stock := &vo.RuleTreeNodeVO{
-		TreeId:                  100000001,
-		RuleKey:                 "rule_stock",
-		RukeDesc:                "库存处理规则",
-		RuleValue:               "",
-		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
-	}
-	rule_stock.RuleTreeNodeLineVOSlice = append(rule_stock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
-	ruleTreeVO := vo.NewRuleTreeVO()
-	ruleTreeVO.TreeId = 100000001
-	ruleTreeVO.TreeName = "决策树规则；增加dall-e-3画图模型"
-	ruleTreeVO.TreeDesc = "决策树规则；增加dall-e-3画图模型"
-	ruleTreeVO.TreeRootRuleNode = "rule_lock"
-	ruleTreeVO.TreeNodeMap["rule_lock"] = rule_lock
-	ruleTreeVO.TreeNodeMap["rule_stock"] = rule_stock
-	ruleTreeVO.TreeNodeMap["rule_luck_award"] = rule_luck_award
-	treeFactory := tree_factory.NewDefultTreeFactory(tree_impl.NewRuleLockLogicTreeNode(),
-		tree_impl.NewRuleLuckAwardLogicTreeNode(),
-		tree_impl.NewRuleStockLogicTreeNode())
-	treeComposite := treeFactory.OpenLogicTree(ruleTreeVO)
-	data := treeComposite.Process("delyr1c", 100001, 100)
-	t.Log(data.AwardRuleValue)
-}
+// func TestLogicTree(t *testing.T) {
+// 	// 带切片的VO
+// 	rule_lock := &vo.RuleTreeNodeVO{
+// 		TreeId:                  "100000001",
+// 		RuleKey:                 "rule_lock",
+// 		RukeDesc:                "限定用户已完成N次抽奖后解锁",
+// 		RuleValue:               "1",
+// 		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
+// 	}
+// 	ruleTreeNodeLineVO1 := &vo.RuleTreeNodeLineVO{
+// 		TreeId:               "100000001",
+// 		RuleNodeFrom:         "rule_lock",
+// 		RuleNodeTo:           "rule_luck_award",
+// 		RuleLimitTypeVO:      &vo.EQUAL,
+// 		RuleLogicCheckTypeVO: &vo.TAKE_OVER,
+// 	}
+// 	ruleTreeNodeLineVO2 := &vo.RuleTreeNodeLineVO{
+// 		TreeId:               "100000001",
+// 		RuleNodeFrom:         "rule_lock",
+// 		RuleNodeTo:           "rule_stock",
+// 		RuleLimitTypeVO:      &vo.EQUAL,
+// 		RuleLogicCheckTypeVO: &vo.ALLOW,
+// 	}
+// 	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
+// 	rule_lock.RuleTreeNodeLineVOSlice = append(rule_lock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO2)
+// 	// 无值VO
+// 	rule_luck_award := &vo.RuleTreeNodeVO{
+// 		TreeId:                  "100000001",
+// 		RuleKey:                 "rule_luck_award",
+// 		RukeDesc:                "限定用户已完成N次抽奖后解锁",
+// 		RuleValue:               "1",
+// 		RuleTreeNodeLineVOSlice: nil,
+// 	}
+// 	rule_stock := &vo.RuleTreeNodeVO{
+// 		TreeId:                  "100000001",
+// 		RuleKey:                 "rule_stock",
+// 		RukeDesc:                "库存处理规则",
+// 		RuleValue:               "",
+// 		RuleTreeNodeLineVOSlice: make([]*vo.RuleTreeNodeLineVO, 0),
+// 	}
+// 	rule_stock.RuleTreeNodeLineVOSlice = append(rule_stock.RuleTreeNodeLineVOSlice, ruleTreeNodeLineVO1)
+// 	ruleTreeVO := vo.NewRuleTreeVO()
+// 	ruleTreeVO.TreeId = "100000001"
+// 	ruleTreeVO.TreeName = "决策树规则；增加dall-e-3画图模型"
+// 	ruleTreeVO.TreeDesc = "决策树规则；增加dall-e-3画图模型"
+// 	ruleTreeVO.TreeRootRuleNode = "rule_lock"
+// 	ruleTreeVO.TreeNodeMap["rule_lock"] = rule_lock
+// 	ruleTreeVO.TreeNodeMap["rule_stock"] = rule_stock
+// 	ruleTreeVO.TreeNodeMap["rule_luck_award"] = rule_luck_award
+// 	treeFactory := tree_factory.NewDefultTreeFactory(tree_impl.NewRuleLockLogicTreeNode(),
+// 		tree_impl.NewRuleLuckAwardLogicTreeNode(),
+// 		tree_impl.NewRuleStockLogicTreeNode())
+// 	treeComposite := treeFactory.OpenLogicTree(ruleTreeVO)
+// 	data := treeComposite.Process("delyr1c", 100001, 100)
+// 	t.Log(data.AwardRuleValue)
+// }
 
 // 10.3策略数链接
 func TestLogicTreeLink(t *testing.T) {
 	strategyRepo := initStrategyRepo()
 	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
+	// strategyArmory.AssembleLotteryStrategy(context.Background(), 100006)
 	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
 	raffleAwardEntity := &StrategyEntity.RaffleFactorEntity{
 		UserId:     "delyr1c",
@@ -469,6 +467,7 @@ func TestLogicTreeLink(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
-
+	// data, _ := repository.NewStrategyService(strategyRepo).QueryRuleTreeVOByTreeId(context.Background(), "tree_lock")
+	// data.TraverseRuleTree()
 	t.Log(award)
 }

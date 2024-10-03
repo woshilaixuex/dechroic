@@ -50,27 +50,25 @@ func (engine *DecisionTreeEngine) NextNode(matterValue string, treeNodeLineVOLSl
 		return ""
 	}
 	decisionLogic := func(nodeLine *vo.RuleTreeNodeLineVO) bool {
-		switch nodeLine.RuleLimitTypeVO {
-		case &vo.EQUAL:
+		switch nodeLine.RuleLimitTypeVO.Code {
+		case vo.EQUAL.Code:
 			return matterValue == nodeLine.RuleLogicCheckTypeVO.Code
-		case &vo.GT:
+		case vo.GT.Code:
 			return false
-		case &vo.LT:
+		case vo.LT.Code:
 			return false
-		case &vo.GE:
+		case vo.GE.Code:
 			return false
-		case &vo.LE:
+		case vo.LE.Code:
 			return false
 		default:
 			return false
 		}
 	}
 	for _, nodeLine := range treeNodeLineVOLSlice {
-
 		if decisionLogic(nodeLine) {
 			return nodeLine.RuleNodeTo
 		}
-
 	}
 	panic("nextNode 计算失败，未找到可执行节点")
 }

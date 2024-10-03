@@ -2,6 +2,8 @@ package chain
 
 import (
 	"context"
+
+	"github.com/delyr1c/dechoric/src/domain/strategy/model/data"
 )
 
 /*
@@ -10,7 +12,7 @@ import (
  * @Description: 过滤链模版（impl为模版实现）
  * @Date: 2024-08-15 23:19
  */
-type ChainLogic func(ctx context.Context, userId string, strategyId int64) (int32, error)
+type ChainLogic func(ctx context.Context, userId string, strategyId int64) (*data.StrategyAwardChanVO, error)
 
 var _ ILogiChain = (*LogicChainNode)(nil)
 
@@ -29,7 +31,7 @@ func NewLogicChainNode() *LogicChainNode {
 func (chain *LogicChainNode) Realize(chainLogic ChainLogic) {
 	chain.chainLogic = chainLogic
 }
-func (chain *LogicChainNode) Logic(ctx context.Context, userId string, strategyId int64) (int32, error) {
+func (chain *LogicChainNode) Logic(ctx context.Context, userId string, strategyId int64) (*data.StrategyAwardChanVO, error) {
 	return chain.chainLogic(ctx, userId, strategyId)
 }
 func (chain *LogicChainNode) AppendNext(next ILogiChain) ILogiChain {

@@ -3,6 +3,7 @@ package chain_ipml
 import (
 	"context"
 
+	"github.com/delyr1c/dechoric/src/domain/strategy/model/data"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/chain"
 )
@@ -27,13 +28,17 @@ func NewDefaultLogicChain(strategyDispatch armory.StrategyDispath) *DefaultLogic
 	defaultLogicChain.Realize(defaultLogicChain.Logic)
 	return defaultLogicChain
 }
-func (chain *DefaultLogicChain) Logic(ctx context.Context, userId string, strategyId int64) (int32, error) {
-	awardId, err := chain.strategyDispatch.GetRandomAwardIdBase(ctx, strategyId)
+func (c *DefaultLogicChain) Logic(ctx context.Context, userId string, strategyId int64) (*data.StrategyAwardChanVO, error) {
+	awardId, err := c.strategyDispatch.GetRandomAwardIdBase(ctx, strategyId)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
-	return int32(awardId), nil
+	return &data.StrategyAwardChanVO{
+		AwardId:          int32(awardId),
+		AwardRuleValue:   c.ModelType(),
+		ChanVOLogicModel: data.RULE_DEFAULT,
+	}, nil
 }
-func (chain *DefaultLogicChain) ModelType() string {
+func (c *DefaultLogicChain) ModelType() string {
 	return "default"
 }

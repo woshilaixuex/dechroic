@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/delyr1c/dechoric/src/domain/strategy/model/data"
 	"github.com/delyr1c/dechoric/src/domain/strategy/repository"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/armory"
 	"github.com/delyr1c/dechoric/src/domain/strategy/service/rule/chain"
@@ -39,40 +40,44 @@ func NewRuleWeightLogicChain(strategyService repository.StrategyService, strateg
 	ruleWeightLogicChain.Realize(ruleWeightLogicChain.Logic)
 	return ruleWeightLogicChain
 }
-func (chain *RuleWeightLogicChain) Logic(ctx context.Context, userId string, strategyId int64) (int32, error) {
-	logx.Infof("抽奖责任链-权重校验：userId：%s strategyId：%d ruleModel：%s", userId, strategyId, chain.ModelType())
-	ruleValue, err := chain.strategyService.QueryStrategyRule(ctx, strategyId, chain.ModelType())
+func (c *RuleWeightLogicChain) Logic(ctx context.Context, userId string, strategyId int64) (*data.StrategyAwardChanVO, error) {
+	logx.Infof("抽奖责任链-权重校验：userId：%s strategyId：%d ruleModel：%s", userId, strategyId, c.ModelType())
+	ruleValue, err := c.strategyService.QueryStrategyRule(ctx, strategyId, c.ModelType())
 	if err != nil {
-		return -1, nil
+		return &data.StrategyAwardChanVO{}, nil
 	}
 	logx.Debug(ruleValue.RuleValue)
 	analyticalValueGroup, analyticalSortedKeys, err := getAnalyticalValue(ruleValue.RuleValue)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 	if len(analyticalValueGroup) == 0 {
-		return 0, nil
+		return &data.StrategyAwardChanVO{}, nil
 	}
 	sort.Slice(analyticalSortedKeys, func(i, j int) bool {
 		return analyticalSortedKeys[i] < analyticalSortedKeys[j]
 	})
 	var nextValue int64 = -1
 	for _, analyticalSortedKey := range analyticalSortedKeys {
-		if chain.userScore < analyticalSortedKey {
+		if c.userScore < analyticalSortedKey {
 			break
 		}
 		nextValue = analyticalSortedKey
 	}
 	if nextValue != -1 {
-		awardId, err := chain.strategyDispatch.GetRandomAwardId(ctx, strategyId, nextValue)
+		awardId, err := c.strategyDispatch.GetRandomAwardId(ctx, strategyId, nextValue)
 		if err != nil {
-			return -1, err
+			return nil, err
 		}
-		logx.Infof("抽奖责任链-权重接管：userId：%s strategyId：%d ruleModel：%s", userId, strategyId, chain.ModelType())
-		return int32(awardId), nil
+		logx.Infof("抽奖责任链-权重接管：userId：%s strategyId：%d ruleModel：%s", userId, strategyId, c.ModelType())
+		return &data.StrategyAwardChanVO{
+			AwardId:          int32(awardId),
+			AwardRuleValue:   c.ModelType(),
+			ChanVOLogicModel: data.RULE_WEIGHT,
+		}, nil
 	}
 	// 抽数不够->直接放行
-	return chain.Next().Logic(ctx, userId, strategyId)
+	return c.Next().Logic(ctx, userId, strategyId)
 }
 func getAnalyticalValue(ruleValue string) (map[int64]string, []int64, error) {
 	ruleValueGroups := strings.Split(ruleValue, common.SPACE)
@@ -92,6 +97,6 @@ func getAnalyticalValue(ruleValue string) (map[int64]string, []int64, error) {
 	}
 	return ruleValueMap, analyticalSortedKeys, nil
 }
-func (chain *RuleWeightLogicChain) ModelType() string {
+func (c *RuleWeightLogicChain) ModelType() string {
 	return LogicModel.RULE_WEIGHT.Code
 }

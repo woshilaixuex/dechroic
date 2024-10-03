@@ -40,7 +40,7 @@ type (
 		Id           int64     `db:"id"`            // 自增ID
 		StrategyId   int64     `db:"strategy_id"`   // 抽奖策略ID
 		StrategyDesc string    `db:"strategy_desc"` // 抽奖策略描述
-		RuleModels 	string 		`db:"rule_models"`// 抽奖规则的模型
+		RuleModels 	sql.NullString 		`db:"rule_models"`// 抽奖规则的模型
 		CreateTime   time.Time `db:"create_time"`   // 创建时间
 		UpdateTime   time.Time `db:"update_time"`   // 更新时间
 	}

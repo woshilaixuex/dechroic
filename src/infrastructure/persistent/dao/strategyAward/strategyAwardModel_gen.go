@@ -56,8 +56,8 @@ type (
 		UpdateTime        time.Time      `db:"update_time"`         // 修改时间
 	}
 	FindStrategyAwardReq struct{
-		StrategyId 	*int64
-		AwardId 	*int64
+		StrategyId 	*int64	`db:"strategy_id"` 
+		AwardId 	*int64	`db:"award_id"` 
 	}
 )
 

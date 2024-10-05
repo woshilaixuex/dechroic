@@ -1,4 +1,4 @@
-package repository
+package infra_repository
 
 import (
 	"context"
@@ -20,6 +20,7 @@ import (
 	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/jinzhu/copier"
 	"github.com/zeromicro/go-zero/core/logx"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
 /*
@@ -40,6 +41,18 @@ type StrategyRepository struct {
 	TreeRuleModel         treeRule.RuleTreeModel
 	TreeRuleNodeModel     treeRuleNode.RuleTreeNodeModel
 	TreeRuleNodeLineModel treeRuleNodeLine.RuleTreeNodeLineModel
+}
+
+func NewStrategyRepository(sqlConn sqlx.SqlConn, redis redis.RedisService) *StrategyRepository {
+	return &StrategyRepository{
+		RedisService:          redis,
+		StrategyAwardModel:    strategyAward.NewStrategyAwardModel(sqlConn),
+		StrategyModel:         strategy.NewStrategyModel(sqlConn),
+		StrategyRuleModel:     strategyRule.NewStrategyRuleModel(sqlConn),
+		TreeRuleModel:         treeRule.NewRuleTreeModel(sqlConn),
+		TreeRuleNodeModel:     treeRuleNode.NewRuleTreeNodeModel(sqlConn),
+		TreeRuleNodeLineModel: treeRuleNodeLine.NewRuleTreeNodeLineModel(sqlConn),
+	}
 }
 
 // 返回strategyAwardEntityList（redis->db)

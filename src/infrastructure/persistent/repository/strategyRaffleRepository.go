@@ -1,4 +1,4 @@
-package repository
+package infra_repository
 
 import (
 	"context"
@@ -40,7 +40,8 @@ func (s *StrategyRepository) QueryStrategyAwardRuleModelVO(ctx context.Context, 
 	}
 	StrategyAward := StrategyAwards[0]
 	if !StrategyAward.RuleModels.Valid {
-		return nil, cerr.LogError(errors.New("Dao RuleModels is null "))
+		err := errors.New("dao ruleModels is null")
+		return nil, cerr.LogError(err)
 	}
 	return &vo.StrategyAwardRuleModelVO{
 		RuleModels: StrategyAward.RuleModels.String,

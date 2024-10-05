@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/delyr1c/dechoric/src/types/cerr"
+	"github.com/delyr1c/dechoric/src/types/common"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -205,4 +207,30 @@ func (rs *RedisService) GetValue(ctx context.Context, key string) (interface{}, 
 	}
 	// 默认返回 string 类型
 	return val, nil
+}
+
+// 使用 Redis 生成递增 ID
+func (rs *RedisService) GenerateID(ctx context.Context) (string, error) {
+	id, err := rs.client.Incr(ctx, common.RedisKeys.UserIdKey).Result()
+	if err != nil {
+		return "", cerr.LogError(err)
+	}
+	return fmt.Sprintf("%012d", id), nil // 格式化为 12 位字符串
+}
+
+// Lock 尝试获取一个锁，返回一个 unlock 函数用于释放锁
+func (rs *RedisService) Lock(ctx context.Context, key string, expiration time.Duration) (func() error, error) {
+	// 尝试获取锁
+	ok, err := rs.client.SetNX(ctx, key, "locked", expiration).Result()
+	if err != nil {
+		return nil, err
+	}
+	if !ok {
+		return nil, fmt.Errorf("could not acquire lock for key: %s", key)
+	}
+	// 返回解锁函数
+	return func() error {
+		_, err := rs.client.Del(ctx, key).Result()
+		return err
+	}, nil
 }

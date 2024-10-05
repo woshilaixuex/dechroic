@@ -34,6 +34,8 @@ var RedisKeys = struct {
 	ActivityAccountLock        string
 	ActivityAccountUpdateLock  string
 	UserCreditAccountLock      string
+	UserIdKey                  string
+	AIUsageLockKey             string
 }{
 	ActivityKey:                "dechoric_activity_key_",
 	ActivitySKUKey:             "dechoric_activity_sku_key_",
@@ -53,4 +55,6 @@ var RedisKeys = struct {
 	ActivityAccountLock:        "activity_account_lock_",
 	ActivityAccountUpdateLock:  "activity_account_update_lock_",
 	UserCreditAccountLock:      "user_credit_account_lock_",
+	UserIdKey:                  "user_id_sequence",
+	AIUsageLockKey:             "ai_usage_lock_",
 }

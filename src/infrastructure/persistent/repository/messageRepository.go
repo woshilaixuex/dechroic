@@ -29,7 +29,23 @@ func NewMessageRepository(sqlConn sqlx.SqlConn, redis redis.RedisService) *Messa
 		AiUsageModel: aiUsage.NewAiUsageModel(sqlConn),
 	}
 }
-func (s *MessageRepository) QueryAIInfoByUserId(ctx context.Context, userId string) (*mess_vo.AIInfosVo, error) {
+
+func (s *MessageRepository) QueryAIInfoByUserId(ctx context.Context, userId string, aimodels_id uint64) (*mess_vo.AIInfoVO, error) {
+	aiUsageRecords, err := s.AiUsageModel.FindByUserIdAndModelId(ctx, userId, aimodels_id)
+	if err != nil {
+		return nil, err
+	}
+	return &mess_vo.AIInfoVO{
+		UsageId:    aiUsageRecords.UsageId,
+		UserId:     userId,
+		ModelId:    aiUsageRecords.ModelId,
+		ModelName:  aiUsageRecords.ModelName,
+		QueryCount: aiUsageRecords.QueryCount,
+	}, nil
+}
+
+// 查询用户AI信息
+func (s *MessageRepository) QueryAIInfosByUserId(ctx context.Context, userId string) (*mess_vo.AIInfosVo, error) {
 	aiUsageRecords, err := s.AiUsageModel.FindByUserId(ctx, userId)
 	if err != nil {
 		return nil, err
@@ -48,6 +64,8 @@ func (s *MessageRepository) QueryAIInfoByUserId(ctx context.Context, userId stri
 		AIInfos: aiInfos,
 	}, nil
 }
+
+// 用户使用对应模型
 func (s *MessageRepository) UseAIByUserId(ctx context.Context, userId string, modelId uint64) (*mess_vo.AIInfosUsVo, error) {
 	// 使用 Redis 锁来防止并发问题
 	lockKey := common.RedisKeys.AIUsageLockKey + userId + "_" + strconv.FormatUint(modelId, 10)

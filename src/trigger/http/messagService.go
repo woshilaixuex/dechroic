@@ -6,6 +6,7 @@ import (
 
 	"github.com/delyr1c/dechoric/src/api/dto"
 	infra_repository "github.com/delyr1c/dechoric/src/infrastructure/persistent/repository"
+	http_model "github.com/delyr1c/dechoric/src/types/model"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,20 +28,33 @@ func NewMessageService(repository *infra_repository.MessageRepository) *MessageS
 func (mc *MessageService) GetUserAIInfo(c *gin.Context) {
 	var req dto.AIInfoRequestDTO
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, http_model.Response[any]{
+			Code: "400",
+			Msg:  "请求体有误",
+		})
 		return
 	}
 
 	// 从请求中获取用户 ID
 	userId := req.UserId
 	ctx := context.Background()
+
 	// 查询用户的 AI 信息
-	aiInfo, err := mc.MessageRepo.QueryAIInfoByUserId(ctx, userId)
+	aiInfo, err := mc.MessageRepo.QueryAIInfosByUserId(ctx, userId)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询失败"})
+		c.JSON(http.StatusInternalServerError, http_model.Response[any]{
+			Code: "500",
+			Msg:  "查询失败",
+		})
 		return
 	}
 
 	// 返回查询结果
-	c.JSON(http.StatusOK, gin.H{"data": aiInfo})
+	c.JSON(http.StatusOK, http_model.Response[dto.AIInfoResponseDTO]{
+		Code: "200",
+		Msg:  "查询成功",
+		Data: dto.AIInfoResponseDTO{
+			AiModels: aiInfo.AIInfos,
+		}, // 返回 AI 信息数据
+	})
 }

@@ -9,12 +9,15 @@ import (
 
 	strategyEntity "github.com/delyr1c/dechoric/src/domain/strategy/model/entity"
 	strategyRepository "github.com/delyr1c/dechoric/src/domain/strategy/repository"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/aiUsage"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/lotteryHistory"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategy"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyAward"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/strategyRule"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRule"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNode"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/treeRuleNodeLine"
+	"github.com/delyr1c/dechoric/src/infrastructure/persistent/dao/user"
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/common"
@@ -41,6 +44,9 @@ type StrategyRepository struct {
 	TreeRuleModel         treeRule.RuleTreeModel
 	TreeRuleNodeModel     treeRuleNode.RuleTreeNodeModel
 	TreeRuleNodeLineModel treeRuleNodeLine.RuleTreeNodeLineModel
+	LotteryHistoryModel   lotteryHistory.LotteryHistoryModel
+	UserModel             user.UserModel
+	AiUsageModel          aiUsage.AiUsageModel
 }
 
 func NewStrategyRepository(sqlConn sqlx.SqlConn, redis redis.RedisService) *StrategyRepository {
@@ -52,6 +58,9 @@ func NewStrategyRepository(sqlConn sqlx.SqlConn, redis redis.RedisService) *Stra
 		TreeRuleModel:         treeRule.NewRuleTreeModel(sqlConn),
 		TreeRuleNodeModel:     treeRuleNode.NewRuleTreeNodeModel(sqlConn),
 		TreeRuleNodeLineModel: treeRuleNodeLine.NewRuleTreeNodeLineModel(sqlConn),
+		LotteryHistoryModel:   lotteryHistory.NewLotteryHistoryModel(sqlConn),
+		UserModel:             user.NewUserModel(sqlConn),
+		AiUsageModel:          aiUsage.NewAiUsageModel(sqlConn),
 	}
 }
 

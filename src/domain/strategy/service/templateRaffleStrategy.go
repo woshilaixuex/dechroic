@@ -45,7 +45,7 @@ func NewTemplateRaffleStrategy(StrategyService repository.StrategyService, Strat
 		StrategyService:     StrategyService,
 		StrategyDispatch:    StrategyDispatch,
 		DefaultChainFactory: chain_factory.NewDefaultLogicFactory(make(map[string]chain.ILogiChain), StrategyDispatch, StrategyService),
-		// !!未对map进行注入
+		// 未对map进行注入
 		DefaultTreeFactory: tree_factory.NewDefultTreeFactory(tree_impl.NewRuleLockLogicTreeNode(), tree_impl.NewRuleLuckAwardLogicTreeNode(),
 			tree_impl.NewRuleStockLogicTreeNode()),
 		RaffleLogicChainfunc: nil,

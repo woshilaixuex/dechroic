@@ -10,4 +10,5 @@ type UserTypeVO struct {
 	UserId   string
 	Username string
 	Email    string
+	Credit   int64
 }

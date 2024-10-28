@@ -12,6 +12,7 @@ import (
 	"github.com/delyr1c/dechoric/src/infrastructure/persistent/redis"
 	"github.com/delyr1c/dechoric/src/types/cerr"
 	"github.com/delyr1c/dechoric/src/types/encrypt"
+	"github.com/zeromicro/go-zero/core/logx"
 	"github.com/zeromicro/go-zero/core/stores/sqlx"
 )
 
@@ -57,6 +58,7 @@ func (r *UserRepository) UserRegister(ctx context.Context, username, password, e
 		Username: username,
 		Password: password,
 		Email:    email,
+		Credit:   1000, //默认1000积分
 	}
 	_, err = r.UserModel.Insert(ctx, userData)
 	if err != nil {
@@ -106,5 +108,22 @@ func (r *UserRepository) UserLogin(ctx context.Context, email, password string) 
 		UserId:   userData.UserId,
 		Username: userData.Username,
 		Email:    userData.Email,
+	}, nil
+}
+
+func (r *UserRepository) UserGetInfo(ctx context.Context, userId string) (*user_vo.UserTypeVO, error) {
+	// 根据 userId 查询用户信息
+	logx.Debug(userId)
+	userData, err := r.UserModel.FindOne(ctx, userId)
+	if err != nil {
+		return nil, cerr.LogError(err)
+	}
+	logx.Debug(userData)
+	// 返回用户信息
+	return &user_vo.UserTypeVO{
+		UserId:   userData.UserId,
+		Username: userData.Username,
+		Email:    userData.Email,
+		Credit:   userData.Credit, // 假设有 Credit 字段
 	}, nil
 }

@@ -35,7 +35,7 @@ func NewRuleWeightLogicChain(strategyService repository.StrategyService, strateg
 		LogicChainNode:   *chain.NewLogicChainNode(),
 		strategyService:  strategyService,
 		strategyDispatch: strategyDispatch,
-		userScore:        6000,
+		userScore:        4000,
 	}
 	ruleWeightLogicChain.Realize(ruleWeightLogicChain.Logic)
 	return ruleWeightLogicChain
@@ -46,7 +46,6 @@ func (c *RuleWeightLogicChain) Logic(ctx context.Context, userId string, strateg
 	if err != nil {
 		return &data.StrategyAwardChanVO{}, nil
 	}
-	logx.Debug(ruleValue.RuleValue)
 	analyticalValueGroup, analyticalSortedKeys, err := getAnalyticalValue(ruleValue.RuleValue)
 	if err != nil {
 		return nil, err

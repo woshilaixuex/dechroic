@@ -457,7 +457,7 @@ func initStrategyRepo() *infra_repository.StrategyRepository {
 func TestLogicTreeLink(t *testing.T) {
 	strategyRepo := initStrategyRepo()
 	strategyArmory := armory.NewStrategyArmory(*repository.NewStrategyService(strategyRepo))
-	// strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
+	strategyArmory.AssembleLotteryStrategy(context.Background(), 100001)
 	defaultRaffleStrategy := raffle.NewDefaultRaffleStrategy(*repository.NewStrategyService(strategyRepo), strategyArmory)
 	raffleAwardEntity := &StrategyEntity.RaffleFactorEntity{
 		UserId:     "delyr1c",
@@ -469,5 +469,5 @@ func TestLogicTreeLink(t *testing.T) {
 	}
 	// data, _ := repository.NewStrategyService(strategyRepo).QueryRuleTreeVOByTreeId(context.Background(), "tree_lock")
 	// data.TraverseRuleTree()
-	t.Log(award)
+	t.Log(award.AwardDesc)
 }
